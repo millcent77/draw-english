@@ -204,19 +204,79 @@ const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const fileMode = window.location?.protocol === 'file:';
 let heard = false, readCorrect = false, rewarded = false, speaking = false, recording = false;
 let recognizer = null, recordingTimer = null;
+let testingMic = false, stopMicTest = null;
+function microphoneConstraints() {
+  const device = $('mic-device').value;
+  return { audio: { ...(device ? { deviceId: { exact: device } } : {}), echoCancellation: false, noiseSuppression: false, autoGainControl: true } };
+}
+async function listMicrophones() {
+  if (!navigator.mediaDevices?.enumerateDevices) return;
+  const selected = $('mic-device').value;
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const defaultOption = document.createElement('option'); defaultOption.value = ''; defaultOption.textContent = '系统默认麦克风';
+  $('mic-device').replaceChildren(defaultOption);
+  devices.filter(device => device.kind === 'audioinput').forEach((device, index) => {
+    const option = document.createElement('option'); option.value = device.deviceId; option.textContent = device.label || `麦克风 ${index + 1}`; $('mic-device').appendChild(option);
+  });
+  $('mic-device').value = selected;
+}
+function monitorMicrophone(stream) {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return () => {};
+  const audio = new AudioContext();
+  const source = audio.createMediaStreamSource(stream), analyser = audio.createAnalyser();
+  analyser.fftSize = 1024; source.connect(analyser);
+  audio.resume().catch(() => {});
+  const samples = new Float32Array(analyser.fftSize);
+  let frame, stopped = false, peak = 0;
+  function sample() {
+    if (stopped) return;
+    analyser.getFloatTimeDomainData(samples);
+    const rms = Math.sqrt(samples.reduce((sum, value) => sum + value * value, 0) / samples.length);
+    peak = Math.max(peak, rms);
+    $('mic-meter').value = Math.min(100, Math.round(rms * 500));
+    $('mic-status').textContent = peak > 0.008 ? '✓ 麦克风已有音频信号。若仍无法识别单词，问题可能在识别服务；音量跳动不代表发音正确。' : '正在收音；若说话时音量条一直为零，请换收音设备、解除静音或检查系统输入音量。';
+    frame = requestAnimationFrame(sample);
+  }
+  sample();
+  return () => { stopped = true; cancelAnimationFrame(frame); source.disconnect(); analyser.disconnect(); audio.close().catch(() => {}); $('mic-meter').value = 0; };
+}
+$('test-mic').addEventListener('click', async () => {
+  if (testingMic) { stopMicTest?.(); return; }
+  if (recording || speaking) return;
+  if (fileMode) { window.location.assign('http://127.0.0.1:8765/#practice'); return; }
+  if (!navigator.mediaDevices?.getUserMedia) { $('mic-status').textContent = '浏览器无法访问麦克风，请检查网址和权限。'; return; }
+  testingMic = true; syncPractice();
+  let stream, cleanup = () => {}, timer;
+  stopMicTest = () => { clearTimeout(timer); cleanup(); stream?.getTracks().forEach(track => track.stop()); testingMic = false; stopMicTest = null; syncPractice(); };
+  $('mic-status').textContent = '请允许麦克风，随后说一句话，观察音量条。';
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(microphoneConstraints());
+    if (!testingMic) { stream.getTracks().forEach(track => track.stop()); return; }
+    cleanup = monitorMicrophone(stream);
+    await listMicrophones().catch(() => {});
+    timer = setTimeout(() => stopMicTest?.(), 10000);
+  } catch (error) {
+    $('mic-status').textContent = error.name === 'NotAllowedError' ? '麦克风权限被拒绝，请在浏览器网站设置和系统设置中允许麦克风。' : '无法打开所选麦克风，请换一个设备并检查连接。';
+    stopMicTest?.();
+  }
+});
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 function normalizedWord(value) { return value.trim().toLowerCase(); }
 function syncPractice() {
-  $('speak').disabled = speaking || recording;
-  $('repeat').disabled = speaking || recording || rewarded;
-  $('record').disabled = fileMode ? false : !heard || !Recognition || speaking || rewarded;
+  $('speak').disabled = speaking || recording || testingMic;
+  $('repeat').disabled = speaking || recording || testingMic || rewarded;
+  $('record').disabled = fileMode ? false : !heard || !Recognition || speaking || testingMic || rewarded;
   $('record').textContent = fileMode ? '打开跟读页面 →' : recording ? '⏹ 停止跟读' : '🎤 开始跟读';
   $('spelling').disabled = rewarded;
   $('check-answer').disabled = speaking || recording || rewarded;
   $('speech-rate').disabled = speaking || recording;
+  $('test-mic').disabled = speaking || recording;
+  $('test-mic').textContent = testingMic ? '停止麦克风测试' : '检查麦克风';
+  $('mic-device').disabled = recording || testingMic;
 }
 async function playLesson(spell) {
-  if (speaking || recording || rewarded) return;
+  if (speaking || recording || testingMic || rewarded) return;
   speaking = true; heard = false; syncPractice();
   const word = levels[levelIndex].word;
   let success = await speakText(word);
@@ -242,17 +302,18 @@ $('done').addEventListener('click', () => {
   playLesson(true);
 });
 $('repeat').addEventListener('click', () => playLesson(true));
-$('record').addEventListener('click', () => {
+$('record').addEventListener('click', async () => {
   if (fileMode) { window.location.assign('http://127.0.0.1:8765/#practice'); return; }
   if (recording) { recognizer?.abort(); return; }
-  if (!heard || !Recognition || fileMode || speaking || rewarded) return;
+  if (!heard || !Recognition || fileMode || speaking || testingMic || rewarded) return;
   readCorrect = false; recording = true; syncPractice();
   $('read-step').textContent = '正在连接麦克风…';
   $('recognition-status').textContent = '请先允许麦克风权限，等到“麦克风已就绪”再读。';
   let received = false;
+  let detectedSpeech = false, micStream = null, cleanupMeter = () => {};
   const session = new Recognition(); recognizer = session;
-  session.lang = 'en-US'; session.continuous = false; session.interimResults = false; session.maxAlternatives = 1;
-  const stop = () => { clearTimeout(recordingTimer); if (recognizer === session) { recording = false; recognizer = null; syncPractice(); } };
+  session.lang = 'en-US'; session.continuous = true; session.interimResults = true; session.maxAlternatives = 1;
+  const stop = () => { clearTimeout(recordingTimer); cleanupMeter(); micStream?.getTracks().forEach(track => track.stop()); if (recognizer === session) { recording = false; recognizer = null; syncPractice(); } };
   session.onaudiostart = () => {
     if (recognizer !== session) return;
     $('read-step').textContent = '麦克风已就绪，轮到你读！';
@@ -260,11 +321,11 @@ $('record').addEventListener('click', () => {
     clearTimeout(recordingTimer);
     recordingTimer = setTimeout(() => { if (recognizer !== session) return; $('recognition-status').textContent = '未收到识别结果。请检查系统麦克风、浏览器权限和网络，再次跟读；输入框仍可使用。'; stop(); session.abort(); }, 20000);
   };
-  session.onspeechstart = () => { if (recognizer === session) $('recognition-status').textContent = '听到你的声音了，正在识别…'; };
+  session.onspeechstart = () => { if (recognizer === session) { detectedSpeech = true; $('recognition-status').textContent = '听到你的声音了，正在识别…'; } };
   session.onresult = event => {
     if (recognizer !== session || received) return;
     const result = event.results[event.resultIndex || 0];
-    if (!result.isFinal) return;
+    if (!result.isFinal) { $('recognition-status').textContent = `正在识别：“${result[0].transcript}”…`; return; }
     received = true;
     const transcript = result[0].transcript;
     readCorrect = normalizedWord(transcript.replace(/[.!?,]+$/g, '')) === normalizedWord(levels[levelIndex].word);
@@ -277,12 +338,22 @@ $('record').addEventListener('click', () => {
     received = true; readCorrect = false;
     const errors = { 'not-allowed': '麦克风权限未开启。请在地址栏的网站设置中允许麦克风，检查系统麦克风权限，再重试。', 'service-not-allowed': '浏览器的语音识别服务不可用，请在支持该服务的浏览器中尝试。', 'network': '语音识别服务连接失败，可能是网络或浏览器服务不支持。允许麦克风不代表服务一定可用，拼写仍可练习。', 'audio-capture': '无法收音，请检查麦克风是否连接、被静音，或被其他程序占用。', 'no-speech': '没有识别到声音。看到“麦克风已就绪”后靠近麦克风读完整单词。', 'aborted': '跟读已停止，可以再次开始。' };
     $('recognition-status').textContent = errors[event.error] || '没有听清，请检查麦克风，再试一次。';
+    if (event.error === 'no-speech') $('recognition-status').textContent = detectedSpeech ? '检测到说话，但识别服务没有返回单词。请重试或检查浏览器语音服务，不代表你没有读。' : '识别服务未检测到有效语音。请点击“检查麦克风”，观察音量条并选择正确的收音设备。';
     $('read-step').textContent = '跟读未完成，请重试。'; stop();
   };
   session.onend = () => { if (recognizer !== session) return; if (!received) $('recognition-status').textContent = '没有听到单词，请再次点击跟读。'; stop(); };
   // Permission dialogs may stay open: don't spend the child's speaking time before capture begins.
   recordingTimer = setTimeout(() => { if (recognizer !== session) return; $('recognition-status').textContent = '麦克风尚未就绪，请检查权限或点击跟读重试。'; stop(); session.abort(); }, 60000);
-  try { session.start(); } catch { $('recognition-status').textContent = '无法启动麦克风，请在 localhost 或 HTTPS 页面检查权限后重试。'; stop(); }
+  try {
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+      micStream = await navigator.mediaDevices.getUserMedia(microphoneConstraints());
+      if (recognizer !== session) { micStream.getTracks().forEach(track => track.stop()); return; }
+      cleanupMeter = monitorMicrophone(micStream);
+      listMicrophones().catch(() => {});
+      // Modern browsers can recognize the exact captured track; older ones may use the system default.
+      session.start(micStream.getAudioTracks()[0]);
+    } else session.start();
+  } catch (error) { $('recognition-status').textContent = error.name === 'NotAllowedError' ? '麦克风权限未允许，请检查网站及系统权限。' : '无法打开麦克风或启动识别，请检查收音设备与浏览器支持。'; stop(); }
 });
 $('answer-form').addEventListener('submit', event => {
   event.preventDefault();

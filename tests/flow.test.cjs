@@ -13,7 +13,7 @@ function setup({ recognition = true, saved = null, protocol = 'http:' } = {}) {
   const colors = ['#ed4545', '#f4bd24', '#3884ea', '#35a96e'].map(color => element({ dataset: { color }, textContent: 'color' }));
   let timers = [], stored = saved, spoken = [], session;
   const speech = { getVoices: () => [{ lang: 'en-US' }], addEventListener() {}, cancel() {}, speak(u) { spoken.push(u); queueMicrotask(() => u.onend()); } };
-  class Recognition { constructor() { session = this; } start() {} stop() {} abort() {} }
+  class Recognition { constructor() { session = this; } start(track) { this.track = track; } stop() {} abort() { this.onerror?.({ error: 'aborted' }); } }
   const context = { document: { getElementById: id => ids[id], querySelectorAll: () => colors, createElement: () => element(), createElementNS: () => element(), createTextNode: text => ({ textContent: text }) }, window: { speechSynthesis: speech, SpeechSynthesisUtterance: true, matchMedia: () => ({ matches: true }), location: { protocol } }, localStorage: { getItem: () => stored, setItem: (_, value) => { stored = value; } }, SpeechSynthesisUtterance: function(text) { this.text = text; }, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { timers = timers.filter(item => item !== t); }, Promise, Math };
   if (recognition) context.window.SpeechRecognition = Recognition;
   vm.createContext(context); vm.runInContext(fs.readFileSync('app.js', 'utf8'), context);
@@ -53,5 +53,14 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   const slow = setup(); slow.ids['speech-rate'].value = '0.6'; slow.ids['pet-options'].children[0].handlers.click(); slow.ids.done.handlers.click(); await slow.flush(); assert.equal(slow.spoken[0].rate, 0.6); assert.ok(slow.spoken.slice(1, -1).every(u => u.rate === 1));
   const fileApp = setup({ protocol: 'file:' }); fileApp.ids['pet-options'].children[0].handlers.click(); fileApp.ids.done.handlers.click(); await fileApp.flush(); assert.equal(fileApp.ids.record.disabled, false); assert.equal(fileApp.ids.record.textContent, '打开跟读页面 →'); assert.equal(fileApp.ids.spelling.disabled, false);
   let destination; fileApp.context.window.location.assign = url => { destination = url; }; fileApp.ids.record.handlers.click(); assert.equal(destination, 'http://127.0.0.1:8765/#practice');
+  const mic = setup(); let stoppedTracks = 0, constraints;
+  const track = { stop() { stoppedTracks++; } };
+  mic.context.navigator = { mediaDevices: { async getUserMedia(options) { constraints = options; return { getAudioTracks: () => [track], getTracks: () => [track] }; }, async enumerateDevices() { return [{ kind: 'audioinput', deviceId: 'headset', label: 'Headset' }]; } } };
+  mic.ids['mic-device'].value = 'headset';
+  await mic.ids['test-mic'].handlers.click(); assert.equal(constraints.audio.deviceId.exact, 'headset'); assert.equal(mic.ids.record.disabled, true); mic.ids['test-mic'].handlers.click(); assert.equal(stoppedTracks, 1);
+  mic.ids['pet-options'].children[0].handlers.click(); mic.ids.repeat.handlers.click(); await mic.flush(); await mic.ids.record.handlers.click(); assert.equal(mic.session.track, track); assert.equal(mic.session.continuous, true); assert.equal(mic.session.interimResults, true);
+  const interim = [{ transcript: 'Apple' }]; interim.isFinal = false; mic.session.onresult({ results: [interim], resultIndex: 0 }); mic.ids.spelling.value = 'apple'; submit(mic); assert.equal(mic.ids.points.textContent, '⭐ 0');
+  mic.session.onspeechstart(); mic.session.onerror({ error: 'no-speech' }); assert.match(mic.ids['recognition-status'].textContent, /不代表你没有读/); assert.equal(stoppedTracks, 2);
+  await mic.ids.record.handlers.click(); mic.transcript('Apple'); assert.equal(stoppedTracks, 3); submit(mic); assert.equal(mic.ids.points.textContent, '⭐ 10');
   console.log('PASS: normal-speed letters, independent spelling, reward gates, pet economy, persistence, microphone capture events and service failure.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
