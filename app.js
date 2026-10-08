@@ -231,7 +231,7 @@ async function playLesson(spell) {
   }
   speaking = false; heard = success; syncPractice();
   $('listen-step').textContent = success ? '✓ 听完啦，现在轮到你读！' : '朗读失败，请点击“再听一次”重试。';
-  $('recognition-status').textContent = fileMode ? '当前是文件页面，跟读请双击“启动学习.cmd”，然后访问 http://localhost:3000。在新网址首次授权时选择“访问该网站时允许”。拼写仍可输入。' : !Recognition ? '此浏览器不支持跟读识别，请使用支持语音识别的浏览器；无法识别时不发放积分。拼写仍可练习。' : success ? '点击“开始跟读”，等待“麦克风已就绪”后说出整个单词。' : '请检查声音及英语语音设置，成功听完后才能跟读。';
+  $('recognition-status').textContent = fileMode ? '当前是文件页面，跟读请双击“启动学习.cmd”，然后访问 http://127.0.0.1:8765。在新网址首次授权时选择“访问该网站时允许”。拼写仍可输入。' : !Recognition ? '此浏览器不支持跟读识别，请使用支持语音识别的浏览器；无法识别时不发放积分。拼写仍可练习。' : success ? '点击“开始跟读”，等待“麦克风已就绪”后说出整个单词。' : '请检查声音及英语语音设置，成功听完后才能跟读。';
   status.textContent = success ? '听完啦，慢慢跟读，不着急！' : '朗读未完成，可以再次尝试。';
 }
 $('done').addEventListener('click', () => {
@@ -243,7 +243,7 @@ $('done').addEventListener('click', () => {
 });
 $('repeat').addEventListener('click', () => playLesson(true));
 $('record').addEventListener('click', () => {
-  if (fileMode) { window.location.assign('http://localhost:3000/#practice'); return; }
+  if (fileMode) { window.location.assign('http://127.0.0.1:8765/#practice'); return; }
   if (recording) { recognizer?.abort(); return; }
   if (!heard || !Recognition || fileMode || speaking || rewarded) return;
   readCorrect = false; recording = true; syncPractice();
@@ -308,7 +308,7 @@ $('next-level').addEventListener('click', () => {
   heard = false; readCorrect = false; rewarded = false; completing = false;
   $('practice').hidden = false; $('next-level').hidden = true; $('spelling').value = '';
   $('answer-status').textContent = ''; $('listen-step').textContent = '点击“朗读”或“再听一次”，听完后跟读';
-  $('recognition-status').textContent = fileMode ? '请打开 http://localhost:3000 使用跟读，拼写可直接输入。' : '先听朗读，再跟读；也可以先输入单词。'; $('read-step').textContent = '点击麦克风，说出这个英文单词'; $('type-step').textContent = '用键盘拼出单词';
+  $('recognition-status').textContent = fileMode ? '请打开 http://127.0.0.1:8765 使用跟读，拼写可直接输入。' : '先听朗读，再跟读；也可以先输入单词。'; $('read-step').textContent = '点击麦克风，说出这个英文单词'; $('type-step').textContent = '用键盘拼出单词';
   renderLevel(); renderPet(); syncPractice(); $('speak').focus();
 });
 renderLevel();

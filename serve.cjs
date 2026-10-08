@@ -10,5 +10,5 @@ const server = http.createServer((request, response) => {
     response.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': 'no-store' }); response.end(data);
   });
 });
-server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? '端口 3000 已被占用，请关闭已有服务后重试。' : error.message); process.exitCode = 1; });
-server.listen(3000, '127.0.0.1', () => console.log('小小画家：http://localhost:3000 — 按 Ctrl+C 停止服务'));
+server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? '端口 8765 已被占用，请关闭已有服务后重试。' : error.message); process.exitCode = 1; });
+server.listen(8765, '127.0.0.1', () => console.log('小小画家：http://127.0.0.1:8765 — 按 Ctrl+C 停止服务'));

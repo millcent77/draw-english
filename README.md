@@ -1,6 +1,6 @@
 # 小小画家 · Draw & Say
 
-HTML5、CSS3 和原生 JavaScript，无需安装依赖。双击 `启动学习.cmd`，或在项目目录执行 `node serve.cjs`，访问 http://localhost:3000。麦克风识别请使用 localhost 或 HTTPS，并允许麦克风权限。
+HTML5、CSS3 和原生 JavaScript，无需安装依赖。双击 `启动学习.cmd`，或在项目目录执行 `node serve.cjs`，访问 http://127.0.0.1:8765。麦克风识别请使用 localhost 或 HTTPS，并允许麦克风权限。
 
 ## 学习流程
 

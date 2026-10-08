@@ -1,5 +1,3 @@
 @echo off
 cd /d "%~dp0"
-start "" "http://localhost:3000"
-node serve.cjs
-pause
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0launch.ps1"
