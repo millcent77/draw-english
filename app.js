@@ -282,7 +282,7 @@ async function playLesson(spell) {
   let success = await speakText(word);
   if (success && spell) {
     await pause(250);
-    for (const letter of word.toUpperCase()) {
+    for (const letter of word.toUpperCase().replace(/[^A-Z]/g, '')) {
       success = await speakText(letter, 1);
       if (!success) break;
       await pause(100);

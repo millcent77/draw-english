@@ -17,6 +17,19 @@
     <section class="pet-home" aria-label="我的宠物"><div id="pet-avatar" class="pet-avatar" aria-hidden="true">🐾</div><div><h2 id="pet-name">选一个学习小伙伴</h2><p id="pet-growth">学单词，赚星星，陪宠物长大！</p><progress id="pet-progress" max="30" value="0" aria-label="宠物成长进度"></progress></div><strong id="points">⭐ 0</strong></section>
     <section id="pet-picker" class="pet-picker" aria-label="选择宠物"><h2>你想和谁一起学习？</h2><div id="pet-options"></div></section>
     <section class="shop" aria-label="食物商店"><h3>🍽️ 宠物小食堂</h3><div id="food-options"></div><p id="pet-status" role="status" aria-live="polite">先选择宠物，再开始学习吧。</p></section>
+    <section class="learning-controls" aria-label="学习设置">
+      <h2>🎨 画画学习乐园</h2>
+      <div class="learning-selects">
+        <label>学习内容 · Subject · วิชา<select id="subject"><option value="english">英语 · English · ภาษาอังกฤษ</option><option value="math">数学 · Math · คณิตศาสตร์</option></select></label>
+        <label>难度 · Difficulty · ระดับ<select id="difficulty"><option value="easy">入门 · Easy · ง่าย</option><option value="medium">进阶 · Medium · ปานกลาง</option><option value="hard">挑战 · Hard · ยาก</option></select></label>
+      </div><p id="learning-description"></p><p id="learning-status" role="status" aria-live="polite"></p>
+    </section>
+    <section id="math-practice" class="practice" hidden aria-label="数学学习">
+      <h2 id="math-title"></h2><p id="math-prompt"></p><div id="math-visual" class="math-visual"></div>
+      <p>在下方画一画，再填写答案。 · Draw, then answer. · วาดแล้วตอบ</p>
+      <form id="math-form"><label for="math-answer">答案 · Answer · คำตอบ</label><input id="math-answer" type="text" inputmode="numeric" autocomplete="off" maxlength="3"><button type="submit" id="math-check">检查 · Check · ตรวจ +10 ⭐</button></form>
+      <p id="math-status" role="status" aria-live="polite"></p><button type="button" id="math-next" hidden>下一题 · Next · ถัดไป →</button>
+    </section>
     <section class="lesson" aria-label="当前关卡">
       <div class="apple" id="lesson-icon" aria-hidden="true">🍎</div>
       <div class="lesson-copy"><p class="eyebrow" id="level-label">第 1 关 · 今天画什么？</p><h2 lang="en-US"><span id="lesson-word">Apple</span> <span id="lesson-translation">苹果</span></h2><p id="lesson-prompt">画一个属于你的大苹果吧！</p></div>
@@ -44,5 +57,6 @@
   </main>
   <div id="celebration" class="celebration" hidden><div id="confetti" aria-hidden="true"></div><div class="praise" role="status"><span aria-hidden="true">🌟</span><h2>Great job!</h2><p id="praise-message">你画得真棒！</p></div></div>
   <script src="app.js"></script>
+  <script src="learning.js"></script>
 </body>
 </html>
