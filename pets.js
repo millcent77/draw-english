@@ -12,18 +12,20 @@ const petMoves = [
   { id: 'dance', level: 7, name: '跳舞 · Dance · เต้น' }
 ];
 let petMotionTimer = null;
+let petTouchCount = 0;
 function playPetMove(move) {
   const level = Math.floor(account.growth / 30) + 1;
-  if (!account.pet || (move !== 'eat' && !petMoves.some(item => item.id === move && level >= item.level))) return;
+  if (!account.pet || (!['eat', 'cuddle'].includes(move) && !petMoves.some(item => item.id === move && level >= item.level))) return;
   clearTimeout(petMotionTimer);
   const avatar = document.getElementById('pet-avatar');
   avatar.setAttribute('data-motion', ''); void avatar.offsetWidth;
   avatar.setAttribute('data-motion', move);
-  document.getElementById('pet-action-status').textContent = move === 'eat' ? '好吃！ · Yummy! · อร่อย!' : petMoves.find(item => item.id === move).name;
+  document.getElementById('pet-action-status').textContent = move === 'eat' ? '好吃！ · Yummy! · อร่อย!' : move === 'cuddle' ? '喜欢你摸摸我！ · I love your pats! · ชอบให้เธอลูบฉัน!' : petMoves.find(item => item.id === move).name;
   petMotionTimer = setTimeout(() => avatar.setAttribute('data-motion', ''), 1800);
 }
 function renderPetCharacter(pet) {
   const avatar = document.getElementById('pet-avatar');
+  avatar.disabled = !pet;
   if (!pet) { avatar.textContent = '🐾'; document.getElementById('pet-actions').replaceChildren(); return; }
   const level = Math.floor(account.growth / 30) + 1;
   const phase = petStages.filter(item => level >= item.min).slice(-1)[0];
@@ -37,6 +39,7 @@ function renderPetCharacter(pet) {
       }
       character.appendChild(node);
     }
+    const heart = document.createElement('span'); heart.className = 'pet-affection'; heart.textContent = '♥'; character.appendChild(heart);
     avatar.appendChild(character);
   }
   avatar.style.setProperty('--pet-size', phase.size);
@@ -51,3 +54,10 @@ function renderPetCharacter(pet) {
     button.addEventListener('click', () => playPetMove(move.id)); actions.appendChild(button);
   });
 }
+
+document.getElementById('pet-avatar').addEventListener('click', () => {
+  if (!account.pet) return;
+  const level = Math.floor(account.growth / 30) + 1;
+  const reactions = ['cuddle', ...petMoves.filter(move => level >= move.level).map(move => move.id)];
+  playPetMove(reactions[petTouchCount++ % reactions.length]);
+});

@@ -58,6 +58,9 @@ function renderMath() {
   status.textContent = '可以画数轴、拆分数字或分组，帮助计算。 · Draw to solve. · วาดเพื่อช่วยคำนวณ';
 }
 function renderCourse() {
+  lessonReward = difficultyRewards[learning.difficulty];
+  $('check-answer').textContent = `检查答案 · Check · ตรวจ +${lessonReward} ⭐`;
+  $('math-check').textContent = `检查 · Check · ตรวจ +${lessonReward} ⭐`;
   $('subject').value = learning.subject; $('difficulty').value = learning.difficulty;
   const math = learning.subject === 'math';
   document.querySelector('.lesson').hidden = math; $('practice').hidden = math; $('math-practice').hidden = !math; $('done').hidden = math; $('color-hint').hidden = math;
@@ -85,8 +88,8 @@ $('math-form').addEventListener('submit', event => {
   if (!account.pet) { $('math-status').textContent = '先选择宠物 · Choose a pet first · เลือกสัตว์เลี้ยงก่อน'; return; }
   const answer = $('math-answer').value.trim(), question = mathCourses[learning.difficulty][learning.positions[courseKey()] || 0];
   if (!/^\d+$/.test(answer) || Number(answer) !== question.answer) { $('math-status').textContent = '再算一次，不扣分！ · Try again! · ลองคำนวณอีกครั้ง'; return; }
-  mathRewarded = true; account.points += 10; renderPet(); saveAccount();
-  $('math-status').textContent = '答对啦！ · Correct! · ถูกต้อง! +10 ⭐'; $('math-answer').disabled = true; $('math-check').disabled = true; $('math-next').hidden = false;
+  mathRewarded = true; account.points += lessonReward; renderPet(); saveAccount();
+  $('math-status').textContent = `答对啦！ · Correct! · ถูกต้อง! +${lessonReward} ⭐`; $('math-answer').disabled = true; $('math-check').disabled = true; $('math-next').hidden = false;
 });
 $('math-next').addEventListener('click', () => {
   if (!mathRewarded || learning.subject !== 'math') return;

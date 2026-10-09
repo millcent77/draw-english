@@ -13,6 +13,8 @@ let completing = false;
 const $ = id => document.getElementById(id);
 const pets = [{ id: 'cat', name: '小橘猫', icon: '🐱' }, { id: 'dog', name: '小奶狗', icon: '🐶' }, { id: 'rabbit', name: '小白兔', icon: '🐰' }, { id: 'panda', name: '小熊猫', icon: '🐼' }];
 const foods = [{ name: '小饼干', icon: '🍪', cost: 5, growth: 5 }, { name: '鲜果餐', icon: '🍓', cost: 10, growth: 12 }, { name: '爱心大餐', icon: '🍱', cost: 20, growth: 25 }];
+let lessonReward = 10;
+const difficultyRewards = { easy: 10, medium: 15, hard: 20 };
 const storageKey = 'draw-say-pet-v1';
 let account = { pet: null, points: 0, growth: 0, level: 0 };
 try {
@@ -364,13 +366,13 @@ $('answer-form').addEventListener('submit', event => {
   }
   if (!heard || !readCorrect) {
     $('type-step').textContent = '✓ 拼写正确！';
-    $('answer-status').textContent = '拼写正确！还需要成功听完朗读并通过跟读，才能领取 10 星。输入的单词会保留。';
+    $('answer-status').textContent = `拼写正确！还需要成功听完朗读并通过跟读，才能领取 ${lessonReward} 星。输入的单词会保留。`;
     return;
   }
-  rewarded = true; completing = true; activePointer = null; previous = null; account.points += 10;
-  $('type-step').textContent = '✓ 拼写正确！'; $('answer-status').textContent = '跟读和拼写都正确！奖励 10 颗星星，可以给宠物买食物啦！';
+  rewarded = true; completing = true; activePointer = null; previous = null; account.points += lessonReward;
+  $('type-step').textContent = '✓ 拼写正确！'; $('answer-status').textContent = `跟读和拼写都正确！ · Correct! · ถูกต้อง! +${lessonReward} ⭐`;
   renderPet(); saveAccount(); syncPractice();
-  celebrate(levels[levelIndex]); $('praise-message').textContent = '跟读 + 拼写成功！奖励 +10 ⭐';
+  celebrate(levels[levelIndex]); $('praise-message').textContent = `跟读 + 拼写成功！ · Correct! · ถูกต้อง! +${lessonReward} ⭐`;
   setTimeout(() => { $('celebration').hidden = true; $('confetti').replaceChildren(); $('next-level').hidden = false; $('next-level').focus(); }, 2800);
 });
 $('next-level').addEventListener('click', () => {

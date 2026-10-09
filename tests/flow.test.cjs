@@ -80,18 +80,18 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   course.ids['math-answer'].value = ''; course.ids['math-form'].handlers.submit({ preventDefault() {} });
   assert.equal(course.ids.points.textContent, '⭐ 0');
   course.ids['math-answer'].value = '42'; course.ids['math-form'].handlers.submit({ preventDefault() {} });
-  assert.equal(course.ids.points.textContent, '⭐ 10');
-  course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 10');
+  assert.equal(course.ids.points.textContent, '⭐ 20');
+  course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 20');
   course.ids['math-next'].handlers.click(); assert.match(course.ids['math-title'].textContent, /24 ÷ 6/);
   course.ids.difficulty.value = 'medium'; course.ids.difficulty.handlers.change();
-  course.ids['math-answer'].value = '2'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 10');
-  course.ids['math-answer'].value = '45'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 20');
+  course.ids['math-answer'].value = '2'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 20');
+  course.ids['math-answer'].value = '45'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 35');
   course.ids.subject.value = 'english'; course.ids.subject.handlers.change(); assert.equal(course.ids['lesson-word'].textContent, 'Red apple');
   course.ids.subject.value = 'math'; course.ids.subject.handlers.change(); course.ids.difficulty.value = 'hard'; course.ids.difficulty.handlers.change(); assert.match(course.ids['math-title'].textContent, /24 ÷ 6/);
-  course.ids['math-answer'].value = '4'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 30');
+  course.ids['math-answer'].value = '4'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 55');
   course.ids.difficulty.value = 'easy'; course.ids.difficulty.handlers.change();
   assert.equal(course.ids['math-title'].textContent, '7 + 5 = ?');
-  course.ids['math-answer'].value = '12'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 40');
+  course.ids['math-answer'].value = '12'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 65');
   for (const [growth, phase, unlocked] of [[0, '出生期', 1], [29, '出生期', 1], [30, '幼年期', 2], [89, '幼年期', 2], [90, '成长期', 3], [179, '成长期', 3], [180, '成熟期', 4]]) {
     const petApp = setup({ saved: JSON.stringify({ pet: 'rabbit', points: 20, growth, level: 0 }) });
     assert.match(petApp.ids['pet-stage'].textContent, new RegExp(phase));
@@ -105,6 +105,22 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   assert.match(evolving.ids['pet-stage'].textContent, /幼年期/);
   assert.equal(evolving.ids['pet-avatar'].attributes['data-motion'], 'eat');
   assert.equal(JSON.parse(evolving.saved).growth, 30);
+  const touch = setup();
+  touch.ids['pet-avatar'].handlers.click(); assert.equal(touch.ids.points.textContent, '⭐ 0');
+  touch.ids['pet-options'].children[0].handlers.click();
+  touch.ids['pet-avatar'].handlers.click(); assert.equal(touch.ids['pet-avatar'].attributes['data-motion'], 'cuddle');
+  touch.ids['pet-avatar'].handlers.click(); assert.equal(touch.ids['pet-avatar'].attributes['data-motion'], 'blink');
+  assert.equal(touch.ids.points.textContent, '⭐ 0'); assert.equal(JSON.parse(touch.saved).growth, 0);
+  for (const [difficulty, reward, word] of [['easy', 10, 'Apple'], ['medium', 15, 'Red apple'], ['hard', 20, 'I like apples']]) {
+    const graded = setup({ learning: true }); graded.ids['pet-options'].children[0].handlers.click();
+    graded.ids.difficulty.value = difficulty; graded.ids.difficulty.handlers.change();
+    assert.match(graded.ids['check-answer'].textContent, new RegExp(`\\+${reward}`));
+    graded.ids.repeat.handlers.click(); await graded.flush();
+    graded.ids.record.handlers.click(); graded.transcript(word); graded.ids.spelling.value = word;
+    submit(graded); assert.equal(graded.ids.points.textContent, `⭐ ${reward}`);
+    submit(graded); assert.equal(graded.ids.points.textContent, `⭐ ${reward}`);
+  }
+  console.log('PASS: touch feedback without rewards and graded English/math rewards.');
   console.log('PASS: pet stage boundaries, action unlocks, feeding evolution and restored saves.');
   console.log('PASS: courses, math validation and single rewards.');
   console.log('PASS: normal-speed letters, independent spelling, reward gates, pet economy, persistence, microphone capture events and service failure.');
