@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 function element(extra = {}) {
-  return Object.assign({ textContent: '', value: '', hidden: false, children: [], handlers: {}, dataset: {}, style: { setProperty() {} }, classList: { toggle() {}, add() {}, remove() {} }, setAttribute() {}, addEventListener(name, fn) { const previous = this.handlers[name]; this.handlers[name] = previous ? (...args) => { previous(...args); return fn(...args); } : fn; }, appendChild(child) { this.children.push(child); }, replaceChildren(...children) { this.children = children; }, focus() {}, scrollIntoView() {} }, extra);
+  return Object.assign({ textContent: '', value: '', hidden: false, children: [], handlers: {}, dataset: {}, style: { setProperty() {} }, classList: { toggle() {}, add() {}, remove() {} }, setAttribute(name, value) { (this.attributes ||= {})[name] = value; }, addEventListener(name, fn) { const previous = this.handlers[name]; this.handlers[name] = previous ? (...args) => { previous(...args); return fn(...args); } : fn; }, appendChild(child) { this.children.push(child); }, replaceChildren(...children) { this.children = children; }, focus() {}, scrollIntoView() {} }, extra);
 }
 function setup({ recognition = true, saved = null, protocol = 'http:', learning = false } = {}) {
   const ids = {};
@@ -17,7 +17,7 @@ function setup({ recognition = true, saved = null, protocol = 'http:', learning 
   class Recognition { constructor() { session = this; } start(track) { this.track = track; } stop() {} abort() { this.onerror?.({ error: 'aborted' }); } }
   const context = { document: { getElementById: id => ids[id], querySelector: () => (ids.lesson ||= element()), querySelectorAll: () => colors, createElement: () => element(), createElementNS: () => element(), createTextNode: text => ({ textContent: text }) }, window: { speechSynthesis: speech, SpeechSynthesisUtterance: true, matchMedia: () => ({ matches: true }), location: { protocol } }, localStorage: { getItem: key => key === 'draw-say-pet-v1' ? stored : courseStore[key], setItem: (key, value) => { if (key === 'draw-say-pet-v1') stored = value; else courseStore[key] = value; } }, SpeechSynthesisUtterance: function(text) { this.text = text; }, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { timers = timers.filter(item => item !== t); }, Promise, Math };
   if (recognition) context.window.SpeechRecognition = Recognition;
-  vm.createContext(context); vm.runInContext(fs.readFileSync('app.js', 'utf8'), context);
+  vm.createContext(context); vm.runInContext(fs.readFileSync('pets.js', 'utf8'), context); vm.runInContext(fs.readFileSync('app.js', 'utf8'), context);
   if (learning) vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context);
   return { ids, context, spoken, get session() { return session; }, get saved() { return stored; }, async flush() { for (let i = 0; i < 100; i++) { await Promise.resolve(); const short = timers.filter(t => t.ms < 12000); timers = timers.filter(t => t.ms >= 12000); short.forEach(t => t.fn()); } }, transcript(text) { const result = [{ transcript: text }]; result.isFinal = true; session.onresult({ resultIndex: 0, results: [result] }); } };
 }
@@ -92,6 +92,20 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   course.ids.difficulty.value = 'easy'; course.ids.difficulty.handlers.change();
   assert.equal(course.ids['math-title'].textContent, '7 + 5 = ?');
   course.ids['math-answer'].value = '12'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 40');
+  for (const [growth, phase, unlocked] of [[0, '出生期', 1], [29, '出生期', 1], [30, '幼年期', 2], [89, '幼年期', 2], [90, '成长期', 3], [179, '成长期', 3], [180, '成熟期', 4]]) {
+    const petApp = setup({ saved: JSON.stringify({ pet: 'rabbit', points: 20, growth, level: 0 }) });
+    assert.match(petApp.ids['pet-stage'].textContent, new RegExp(phase));
+    assert.equal(petApp.ids['pet-actions'].children.filter(button => !button.disabled).length, unlocked);
+    assert.equal(petApp.ids['pet-avatar'].dataset.pet, 'rabbit');
+    petApp.ids['pet-actions'].children[3].handlers.click();
+    assert.equal(petApp.ids['pet-avatar'].attributes['data-motion'], unlocked === 4 ? 'dance' : undefined);
+  }
+  const evolving = setup({ saved: JSON.stringify({ pet: 'dog', points: 10, growth: 25, level: 0 }) });
+  evolving.ids['food-options'].children[0].handlers.click();
+  assert.match(evolving.ids['pet-stage'].textContent, /幼年期/);
+  assert.equal(evolving.ids['pet-avatar'].attributes['data-motion'], 'eat');
+  assert.equal(JSON.parse(evolving.saved).growth, 30);
+  console.log('PASS: pet stage boundaries, action unlocks, feeding evolution and restored saves.');
   console.log('PASS: courses, math validation and single rewards.');
   console.log('PASS: normal-speed letters, independent spelling, reward gates, pet economy, persistence, microphone capture events and service failure.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

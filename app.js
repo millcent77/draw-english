@@ -25,7 +25,7 @@ function saveAccount() {
 }
 function renderPet() {
   const pet = pets.find(item => item.id === account.pet);
-  $('pet-avatar').textContent = pet ? pet.icon : '🐾';
+  renderPetCharacter(pet);
   $('pet-name').textContent = pet ? pet.name : '选一个学习小伙伴';
   $('pet-growth').textContent = `成长等级 ${Math.floor(account.growth / 30) + 1} · 距离升级还差 ${30 - account.growth % 30} 成长值`;
   $('pet-progress').value = account.growth % 30;
@@ -49,7 +49,7 @@ foods.forEach(food => {
     if (!account.pet || account.points < food.cost) return;
     account.points -= food.cost; account.growth += food.growth;
     renderPet(); $('pet-status').textContent = `喂食${food.name}成功！宠物成长 +${food.growth}，谢谢你！`; saveAccount();
-    $('pet-avatar').classList.remove('fed'); void $('pet-avatar').offsetWidth; $('pet-avatar').classList.add('fed');
+    playPetMove('eat');
   });
   $('food-options').appendChild(button);
 });
