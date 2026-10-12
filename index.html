@@ -32,7 +32,7 @@
 
     <section class="lesson" aria-label="当前关卡">
       <div class="apple" id="lesson-icon" aria-hidden="true">🍎</div>
-      <div class="lesson-copy"><p class="eyebrow" id="level-label">第 1 关 · 今天画什么？</p><h2 lang="en-US"><span id="lesson-word">Apple</span> <span id="lesson-translation">苹果</span></h2><p id="english-reading" hidden></p><p id="lesson-prompt">画一个属于你的大苹果吧！</p></div>
+      <div class="lesson-copy"><p class="eyebrow" id="level-label">第 1 关 · 今天画什么？</p><h2 lang="en-US"><span id="lesson-word">Apple</span> <span id="lesson-translation">苹果</span></h2><p id="english-reading" hidden></p><p id="lesson-prompt">画一个属于你的大苹果吧！</p><div id="english-translation-details" class="translation-panel" hidden></div></div>
       <button class="speak" id="speak" type="button"><span aria-hidden="true">♫</span> 朗读 <small>听听英语</small></button>
     </section>
     <div class="study-panels">
@@ -42,11 +42,11 @@
       <form id="math-form"><label for="math-answer">答案 · Answer · คำตอบ</label><input id="math-answer" type="text" inputmode="text" autocomplete="off" maxlength="20"><button type="submit" id="math-check">检查 · Check · ตรวจ +10 ⭐</button></form>
       <p id="math-status" role="status" aria-live="polite"></p><button type="button" id="math-next" hidden>下一题 · Next · ถัดไป →</button>
     </section>
-    <section class="practice" id="practice" aria-label="跟读与拼写"><h2>听一听，读一读，打出来</h2><label class="speed-label">朗读速度 <select id="speech-rate"><option value="0.45">很慢</option><option value="0.6">慢速</option><option value="1" selected>正常</option></select></label><ol><li id="listen-step">点击“朗读”或“再听一次”，听完后跟读</li><li id="read-step">点击麦克风，说出这个英文单词</li><li id="type-step">用键盘拼出单词</li></ol><button id="repeat" type="button">🔊 再听一次</button> <button id="record" type="button" disabled>🎤 开始跟读</button><p id="recognition-status" role="status" aria-live="polite">先点击上方“朗读”或“再听一次”。下方可以直接输入单词。</p><div class="mic-check"><button id="test-mic" type="button">检查麦克风</button><label for="mic-device">收音设备</label><select id="mic-device"><option value="">系统默认麦克风</option></select><meter id="mic-meter" min="0" max="100" value="0" aria-label="麦克风音量"></meter><p id="mic-status" role="status" aria-live="polite">说话时音量条应跳动。测试只检查收音，不会判定单词正确。</p></div><p class="microphone-note">请通过 <a href="http://127.0.0.1:8765">本地网址</a> 使用跟读，并在浏览器提示中选择“访问该网站时允许”。看到“麦克风已就绪”再读。语音识别可能使用在线服务，请由家长陪同。</p><form id="answer-form"><label for="spelling">我会拼写！</label><input id="spelling" type="text" lang="en-US" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120" placeholder="在这里输入英文单词"><button id="check-answer" type="submit">检查答案 · +10 ⭐</button></form><p id="answer-status" role="status" aria-live="polite"></p><button id="next-level" type="button" hidden>下一关 →</button></section>
+    <section class="practice" id="practice" aria-label="跟读与拼写"><h2>听一听，读一读，打出来</h2><label class="speed-label">朗读速度 <select id="speech-rate"><option value="0.45">很慢</option><option value="0.6">慢速</option><option value="1" selected>正常</option></select></label><ol><li id="listen-step">点击“朗读”或“再听一次”，听完后跟读</li><li id="read-step">点击麦克风，说出这个英文单词</li><li id="type-step">用键盘拼出单词</li></ol><button id="repeat" type="button">🔊 再听一次</button> <button id="record" type="button" disabled>🎤 开始跟读</button><p id="recognition-status" role="status" aria-live="polite">先点击上方“朗读”或“再听一次”。下方可以直接输入单词。</p><div class="mic-check"><button id="test-mic" type="button">检查麦克风</button><label for="mic-device">收音设备</label><select id="mic-device"><option value="">系统默认麦克风</option></select><meter id="mic-meter" min="0" max="100" value="0" aria-label="麦克风音量"></meter><p id="mic-status" role="status" aria-live="polite">说话时音量条应跳动。测试只检查收音，不会判定单词正确。</p></div><p class="microphone-note">请通过 <a href="http://127.0.0.1:8765">本地网址</a> 使用跟读，并在浏览器提示中选择“访问该网站时允许”。看到“麦克风已就绪”再读。语音识别可能使用在线服务，请由家长陪同。</p><form id="answer-form"><label for="spelling">我会拼写！</label><input id="spelling" type="text" lang="en-US" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120" placeholder="在这里输入英文单词"><button id="check-answer" type="submit">检查答案 · +10 ⭐</button></form><p id="answer-status" role="status" aria-live="polite"></p><div id="english-answer-translation" class="translation-panel" hidden></div><button id="next-level" type="button" hidden>下一关 →</button></section>
 
     <section class="studio" aria-label="绘画工具和画板">
       <section id="drawing-task" hidden aria-label="绘画任务">
-        <p id="drawing-progress"></p><h2 id="drawing-title"></h2><p id="drawing-prompt"></p>
+        <p id="drawing-progress"></p><h2 id="drawing-title"></h2><p id="drawing-prompt"></p><div id="drawing-translations" class="translation-panel" hidden></div>
         <button type="button" id="drawing-listen">听指令 · Listen · ฟังคำสั่ง</button>
         <div id="drawing-tools"><label>颜色 · Color · สี<select id="drawing-color"><option value="red">红 · Red · แดง</option><option value="blue">蓝 · Blue · น้ำเงิน</option><option value="green">绿 · Green · เขียว</option></select></label><label>形状 · Shape · รูปทรง<select id="drawing-shape"><option value="circle">圆 · Circle · วงกลม</option><option value="square">方 · Square · สี่เหลี่ยม</option><option value="triangle">三角 · Triangle · สามเหลี่ยม</option><option value="erase">擦除 · Erase · ลบ</option></select></label></div>
         <div id="drawing-board"></div><button id="drawing-clear" type="button">重画 · Clear · วาดใหม่</button>
@@ -77,6 +77,7 @@
   <script src="pets.js"></script>
   <script src="app.js"></script>
   <script src="curriculum.js"></script>
+  <script src="english-translations.js"></script>
   <script src="drawing-tasks.js"></script>
   <script src="learning.js"></script>
 </body>

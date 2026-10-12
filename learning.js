@@ -93,9 +93,12 @@ function renderEnglishTask() {
   $('lesson-prompt').textContent = `Stage ${learning.stage} · ${item.topic} · ${item.task}`;
   $('english-reading').hidden = !item.reading;
   $('english-reading').textContent = item.reading || '';
+  const translated=item.translations || {};
+  renderTranslationLines($('english-translation-details'), item.reading ? [['短文 · Passage · บทอ่าน', translated.reading],['问题 · Question · คำถาม', translated.question]] : [['意思 · Meaning · ความหมาย',translated.model]]);
+  $('english-answer-translation').hidden=true; $('english-answer-translation').replaceChildren();
   // Hide the model while reading/grammar questions are being answered.
   if (item.reading) {
-    $('lesson-word').textContent = 'Read & answer'; $('lesson-translation').textContent = '';
+    $('lesson-word').textContent = 'Read & answer'; $('lesson-translation').textContent = '阅读并回答 · อ่านแล้วตอบ';
   }
 }
 function matchesMathAnswer(text, expected) {
@@ -107,3 +110,20 @@ function matchesMathAnswer(text, expected) {
   else return false;
   return Number.isFinite(number) && Math.abs(number - expected) < 1e-8;
 }
+
+function renderTranslationLines(container,rows) {
+  container.replaceChildren();
+  for (const [label,pair] of rows) {
+    if (!pair) continue;
+    const title=document.createElement('p'); title.className='translation-label';title.textContent=label;container.appendChild(title);
+    for (const [lang,name] of [['zh','中文'],['th','ไทย']]) {
+      const line=document.createElement('p');line.setAttribute('lang',lang === 'zh' ? 'zh-CN' : 'th');line.textContent=`${name}：${pair[lang]}`;container.appendChild(line);
+    }
+  }
+  container.hidden=container.children.length===0;
+}
+$('answer-form').addEventListener('submit',()=>{
+  if (!rewarded || learning.subject!=='english' || drawingMode()!=='standard') return;
+  const answer=levels[levelIndex].translations?.answer;
+  if (answer) renderTranslationLines($('english-answer-translation'),[['答案 · Answer · คำตอบ',answer]]);
+});

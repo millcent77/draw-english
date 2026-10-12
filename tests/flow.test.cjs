@@ -18,7 +18,7 @@ function setup({ recognition = true, saved = null, protocol = 'http:', learning 
   const context = { document: { getElementById: id => ids[id], querySelector: () => (ids.lesson ||= element()), querySelectorAll: () => colors, createElement: () => element(), createElementNS: () => element(), createTextNode: text => ({ textContent: text }) }, window: { speechSynthesis: speech, SpeechSynthesisUtterance: true, matchMedia: () => ({ matches: true }), location: { protocol } }, localStorage: { getItem: key => key === 'draw-say-pet-v1' ? stored : courseStore[key], setItem: (key, value) => { if (key === 'draw-say-pet-v1') stored = value; else courseStore[key] = value; } }, SpeechSynthesisUtterance: function(text) { this.text = text; }, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { timers = timers.filter(item => item !== t); }, Promise, Math };
   if (recognition) context.window.SpeechRecognition = Recognition;
   vm.createContext(context); vm.runInContext(fs.readFileSync('pets.js', 'utf8'), context); vm.runInContext(fs.readFileSync('app.js', 'utf8'), context);
-  if (learning) { vm.runInContext(fs.readFileSync('curriculum.js', 'utf8'), context); vm.runInContext(fs.readFileSync('drawing-tasks.js', 'utf8'), context); vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context); }
+  if (learning) { vm.runInContext(fs.readFileSync('curriculum.js', 'utf8'), context); vm.runInContext(fs.readFileSync('english-translations.js', 'utf8'), context); vm.runInContext(fs.readFileSync('drawing-tasks.js', 'utf8'), context); vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context); }
   return { ids, context, spoken, get session() { return session; }, get saved() { return stored; }, get courseSaved() { return courseStore['draw-say-courses-v1']; }, get drawingSaved() { return courseStore['draw-say-drawing-v1']; }, async flush() { for (let i = 0; i < 100; i++) { await Promise.resolve(); const short = timers.filter(t => t.ms < 12000); timers = timers.filter(t => t.ms >= 12000); short.forEach(t => t.fn()); } }, transcript(text) { const result = [{ transcript: text }]; result.isFinal = true; session.onresult({ resultIndex: 0, results: [result] }); } };
 }
 assert.equal((fs.readFileSync('index.html', 'utf8').match(/src="learning.js"/g) || []).length, 1);
@@ -120,9 +120,12 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
     const graded = setup({ learning: true }); graded.ids['pet-options'].children[0].handlers.click();
     graded.ids.difficulty.value = difficulty; graded.ids.difficulty.handlers.change();
     assert.match(graded.ids['check-answer'].textContent, new RegExp(`\\+${reward}`));
+    assert.equal(graded.ids['english-answer-translation'].hidden,true);
+    assert.ok(graded.ids['english-translation-details'].children.length >= 3);
     graded.ids.repeat.handlers.click(); await graded.flush();
     graded.ids.record.handlers.click(); graded.transcript(word); graded.ids.spelling.value = word;
     submit(graded); assert.equal(graded.ids.points.textContent, `⭐ ${reward}`);
+    if (difficulty === 'hard') { assert.equal(graded.ids['english-answer-translation'].hidden,false); assert.match(graded.ids['english-answer-translation'].children[1].textContent,/一个苹果/); }
     submit(graded); assert.equal(graded.ids.points.textContent, `⭐ ${reward}`);
   }
   const drawing = setup({ learning: true }); drawing.ids['pet-options'].children[0].handlers.click();
@@ -187,6 +190,27 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
     const questions=vm.runInContext(`Object.values(mathBanks['${stage}']).flat()`,course.context);
     assert.ok(questions.every(q=>!/[0-9]\.[0-9]|%/.test(q.title)), `stage ${stage} must not introduce decimal/percent operations`);
   }
+  const translations=vm.runInContext('englishTranslations',course.context);
+  for (const stage of ['1','2','3','4','5','6']) {
+    assert.equal(translations[stage].length,12);
+    for (const row of translations[stage]) {
+      assert.equal(row.length,10);
+      row.forEach((text,index)=>assert.match(text,index%2 ? /[\u0E00-\u0E7F]/ : /[\u4E00-\u9FFF]/));
+    }
+  }
+  const translated=setup({learning:true}); translated.ids['pet-options'].children[0].handlers.click();
+  assert.match(translated.ids['english-translation-details'].children[1].textContent,/苹果/);
+  assert.match(translated.ids['english-translation-details'].children[2].textContent,/แอปเปิล/);
+  translated.ids.difficulty.value='hard'; translated.ids.difficulty.handlers.change();
+  assert.equal(translated.ids['english-answer-translation'].hidden,true);
+  assert.match(translated.ids['english-translation-details'].children[1].textContent,/午餐/);
+  translated.ids.spelling.value='An apple'; submit(translated); assert.equal(translated.ids['english-answer-translation'].hidden,true);
+  translated.ids.repeat.handlers.click(); await translated.flush(); translated.ids.record.handlers.click(); translated.transcript('An apple'); submit(translated);
+  assert.equal(translated.ids['english-answer-translation'].hidden,false);
+  await translated.flush(); translated.ids['next-level'].handlers.click();
+  assert.equal(translated.ids['english-answer-translation'].hidden,true);
+  assert.match(translated.ids['english-translation-details'].children[1].textContent,/小猫/);
+  console.log('PASS: complete Chinese/Thai coverage and answer translation visibility/reset.');
   console.log('PASS: six distinct stage banks, stage storage, decimals/percentages, scaled geometry and directions.');
   console.log('PASS: harder math, fraction painting, rectangle geometry, listening color/position and reward gates.');
   console.log('PASS: touch feedback without rewards and graded English/math rewards.');
