@@ -6,6 +6,7 @@ const colors = [...document.querySelectorAll('.color')];
 const eraser = document.getElementById('eraser');
 const status = document.getElementById('speech-status');
 let ink = '#ed4545';
+let brushWidth = 12;
 let erasing = false;
 let activePointer = null;
 let previous = null;
@@ -88,6 +89,10 @@ colors.forEach(button => button.addEventListener('click', () => {
   selectTool(button);
 }));
 eraser.addEventListener('click', () => { erasing = true; selectTool(eraser); });
+$('brush-size').addEventListener('change', () => {
+  const width = Number($('brush-size').value);
+  if ([4, 8, 12, 24].includes(width)) brushWidth = width;
+});
 
 function point(event) {
   const bounds = canvas.getBoundingClientRect();
@@ -98,7 +103,7 @@ function draw(from, to) {
   ctx.globalCompositeOperation = erasing ? 'destination-out' : 'source-over';
   ctx.strokeStyle = ink;
   ctx.fillStyle = ink;
-  ctx.lineWidth = erasing ? 32 : 12;
+  ctx.lineWidth = erasing ? 32 : brushWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();

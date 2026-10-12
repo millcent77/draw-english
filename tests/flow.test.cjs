@@ -9,7 +9,8 @@ function setup({ recognition = true, saved = null, protocol = 'http:', learning 
   for (const match of fs.readFileSync('index.html', 'utf8').matchAll(/id="([^"]+)"/g)) ids[match[1]] = element();
   ids['speech-rate'].value = '1';
   ids.spelling.value = '';
-  Object.assign(ids.canvas, { width: 600, height: 400, getContext: () => ({ clearRect() {} }) });
+  const drawingContext = { clearRect() {}, beginPath() {}, arc(x, y, radius) { this.radius = radius; }, fill() {}, moveTo() {}, lineTo() {}, stroke() {} };
+  Object.assign(ids.canvas, { width: 600, height: 400, getContext: () => drawingContext });
   const colors = ['#ed4545', '#f4bd24', '#3884ea', '#35a96e'].map(color => element({ dataset: { color }, textContent: 'color' }));
   ids.celebration.hidden = true;
   let timers = [], stored = saved, spoken = [], session; const courseStore = { 'draw-say-courses-v1': courseSaved, 'draw-say-drawing-v1': drawingSaved };
@@ -25,6 +26,19 @@ assert.equal((fs.readFileSync('index.html', 'utf8').match(/src="learning.js"/g) 
 const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() {} });
 (async () => {
   const app = setup(); const { ids } = app;
+  const drawingContext = ids.canvas.getContext('2d');
+  const drawStroke = () => vm.runInContext('draw({x:10,y:10},{x:20,y:20})', app.context);
+  drawStroke(); assert.equal(drawingContext.lineWidth, 12);
+  for (const width of [4, 8, 12, 24]) {
+    ids['brush-size'].value = String(width); ids['brush-size'].handlers.change();
+    drawStroke(); assert.equal(drawingContext.lineWidth, width);
+    vm.runInContext('draw({x:10,y:10},{x:10,y:10})', app.context);
+    assert.equal(drawingContext.radius, width / 2);
+  }
+  ids.eraser.handlers.click(); drawStroke(); assert.equal(drawingContext.lineWidth, 32);
+  assert.equal(drawingContext.globalCompositeOperation, 'destination-out');
+  vm.runInContext('colors[0].handlers.click()', app.context); drawStroke();
+  assert.equal(drawingContext.lineWidth, 24); assert.equal(drawingContext.globalCompositeOperation, 'source-over');
   assert.equal(ids.practice.hidden, false);
   assert.equal(ids.spelling.disabled, false);
   assert.equal(ids.done.disabled, true);
