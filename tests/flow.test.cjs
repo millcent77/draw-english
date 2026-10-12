@@ -70,20 +70,20 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   course.ids.difficulty.value = 'medium'; course.ids.difficulty.handlers.change();
   assert.equal(course.ids['lesson-word'].textContent, 'Red apple');
   course.ids.difficulty.value = 'hard'; course.ids.difficulty.handlers.change();
-  assert.equal(course.ids['lesson-word'].textContent, 'I like apples');
+  assert.equal(course.ids['lesson-word'].textContent, 'Read & answer');
   assert.equal(course.ids.guide.style.opacity, '0');
   course.ids.subject.value = 'math'; course.ids.subject.handlers.change();
   assert.equal(course.ids.practice.hidden, true);
-  course.ids['math-answer'].value = '136'; course.ids['math-form'].handlers.submit({ preventDefault() {} });
+  course.ids['math-answer'].value = '3'; course.ids['math-form'].handlers.submit({ preventDefault() {} });
   assert.equal(course.ids.points.textContent, '⭐ 20');
   course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 20');
-  course.ids['math-next'].handlers.click(); assert.equal(course.ids['math-title'].textContent, '1/2 + 1/4 = ?');
-  for (const age of ['6-7', '8-9', '10']) for (const subject of ['english', 'math']) for (const difficulty of ['easy','medium','hard']) {
-    course.ids['age-group'].value = age; course.ids.subject.value = subject; course.ids.difficulty.value = difficulty; course.ids.subject.handlers.change();
+  course.ids['math-next'].handlers.click(); assert.match(course.ids['math-title'].textContent, /฿/);
+  for (const stage of ['1','2','3','4','5','6']) for (const subject of ['english', 'math']) for (const difficulty of ['easy','medium','hard']) {
+    course.ids['school-stage'].value = stage; course.ids.subject.value = subject; course.ids.difficulty.value = difficulty; course.ids.subject.handlers.change();
     const list = vm.runInContext(subject === 'math' ? 'mathCourses[learning.difficulty]' : 'courses[learning.difficulty]', course.context);
     assert.ok(list.length >= 12);
     if (subject === 'math') for (const q of list) {
-      assert.ok(Number.isFinite(q.answer) && q.answer >= 0);
+      assert.ok(Number.isFinite(q.answer));
       assert.equal(vm.runInContext(`matchesMathAnswer(${JSON.stringify(String(q.answer))},${q.answer})`, course.context),true);
     }
   }
@@ -91,9 +91,9 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   for (const bad of ['', '1/0', 'Infinity', '0.5x', '1+1']) assert.equal(vm.runInContext(`matchesMathAnswer(${JSON.stringify(bad)},.5)`,course.context),false);
   const migrated = setup({ learning: true, courseSaved: JSON.stringify({subject:'math',difficulty:'easy',positions:{'math:easy':4}}) });
   assert.match(migrated.ids['math-progress'].textContent, /第 5 题/);
-  migrated.ids['age-group'].value = '10'; migrated.ids['age-group'].handlers.change();
+  migrated.ids['age-group'].value = '10'; migrated.ids['age-group'].handlers.change({target:{id:'age-group'}});
   assert.match(migrated.ids['math-progress'].textContent, /第 1 题/);
-  migrated.ids['age-group'].value = '6-7'; migrated.ids['age-group'].handlers.change();
+  migrated.ids['age-group'].value = '6-7'; migrated.ids['age-group'].handlers.change({target:{id:'age-group'}});
   assert.match(migrated.ids['math-progress'].textContent, /第 5 题/);
   const ageRestored = setup({ learning: true, courseSaved: migrated.courseSaved });
   assert.equal(ageRestored.ids['age-group'].value, '6-7'); assert.match(ageRestored.ids['math-progress'].textContent, /第 5 题/);
@@ -116,7 +116,7 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   touch.ids['pet-avatar'].handlers.click(); assert.equal(touch.ids['pet-avatar'].attributes['data-motion'], 'cuddle');
   touch.ids['pet-avatar'].handlers.click(); assert.equal(touch.ids['pet-avatar'].attributes['data-motion'], 'blink');
   assert.equal(touch.ids.points.textContent, '⭐ 0'); assert.equal(JSON.parse(touch.saved).growth, 0);
-  for (const [difficulty, reward, word] of [['easy', 10, 'Apple'], ['medium', 15, 'Red apple'], ['hard', 20, 'I like apples']]) {
+  for (const [difficulty, reward, word] of [['easy', 10, 'Apple'], ['medium', 15, 'Red apple'], ['hard', 20, 'An apple']]) {
     const graded = setup({ learning: true }); graded.ids['pet-options'].children[0].handlers.click();
     graded.ids.difficulty.value = difficulty; graded.ids.difficulty.handlers.change();
     assert.match(graded.ids['check-answer'].textContent, new RegExp(`\\+${reward}`));
@@ -134,17 +134,17 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   drawing.ids['drawing-board'].children[0].handlers.click(); drawing.ids['drawing-board'].children[1].handlers.click(); checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 0');
   drawing.ids['drawing-board'].children[1].handlers.click(); checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 10');
   checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 10');
-  drawing.ids['drawing-next'].handlers.click(); assert.equal(drawing.ids['drawing-title'].textContent,'2/6');
+  drawing.ids['drawing-next'].handlers.click(); assert.equal(drawing.ids['drawing-title'].textContent,'2/4');
   drawing.ids['practice-mode'].value='geometry'; drawing.ids['practice-mode'].handlers.change();
-  drawing.ids['drawing-answer'].value='6';
-  for (const index of [0,1,2,16,17,18]) drawing.ids['drawing-board'].children[index].handlers.click();
+  drawing.ids['drawing-answer'].value='3';
+  for (const index of [0,8,16]) drawing.ids['drawing-board'].children[index].handlers.click();
   checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 10');
   drawing.ids['drawing-clear'].handlers.click();
-  for (const index of [0,1,2,8,9,10]) drawing.ids['drawing-board'].children[index].handlers.click();
+  for (const index of [0,1,2]) drawing.ids['drawing-board'].children[index].handlers.click();
   drawing.ids['drawing-answer'].value='7'; checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 10');
-  drawing.ids['drawing-answer'].value='6'; checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 20');
+  drawing.ids['drawing-answer'].value='3'; checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 20');
   drawing.ids['drawing-next'].handlers.click();
-  assert.equal(vm.runInContext('drawingQuestion.answer',drawing.context),14); // 4x3 perimeter
+  assert.equal(vm.runInContext('drawingQuestion.answer',drawing.context),8); // stage 2: 4x2 array count
   drawing.ids.subject.value='english'; drawing.ids.subject.handlers.change();
   drawing.ids['practice-mode'].value='listening'; drawing.ids['practice-mode'].handlers.change();
   checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 20');
@@ -162,8 +162,32 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   const drawRestored = setup({ learning:true, courseSaved:drawing.courseSaved, drawingSaved:drawing.drawingSaved, saved:drawing.saved });
   drawRestored.ids.subject.value='math'; drawRestored.ids.subject.handlers.change();
   drawRestored.ids['practice-mode'].value='fractions'; drawRestored.ids['practice-mode'].handlers.change();
-  assert.equal(drawRestored.ids['drawing-title'].textContent,'2/6');
+  assert.equal(drawRestored.ids['drawing-title'].textContent,'2/4');
   assert.equal(drawRestored.ids.points.textContent,'⭐ 30');
+  for (const subject of ['english','math']) for (const difficulty of ['easy','medium','hard']) {
+    const signatures=[];
+    for (const stage of ['1','2','3','4','5','6']) {
+      signatures.push(vm.runInContext(`JSON.stringify(${subject === 'math' ? 'mathBanks' : 'englishBanks'}['${stage}']['${difficulty}'])`,course.context));
+    }
+    assert.equal(new Set(signatures).size,6, `${subject}/${difficulty} must have six distinct banks`);
+  }
+  assert.equal(vm.runInContext('matchesMathAnswer("-5", -5)',course.context),true);
+  const stage5fraction=vm.runInContext('makeDrawingQuestion("fractions",0,"easy","5")',course.context);
+  assert.equal(stage5fraction.answer,10); assert.match(stage5fraction.title,/%/);
+  const stage6fraction=vm.runInContext('makeDrawingQuestion("fractions",0,"easy","6")',course.context);
+  assert.equal(stage6fraction.answer,3); assert.match(stage6fraction.title,/of 15/);
+  const stage5geometry=vm.runInContext('makeDrawingQuestion("geometry",0,"easy","5")',course.context);
+  assert.equal(stage5geometry.answer,3); // 6x2 cells, side .5 -> area 3
+  const stage3listen=vm.runInContext('makeDrawingQuestion("listening",2,"easy","3")',course.context);
+  assert.equal(stage3listen.region,'left');
+  assert.equal(vm.runInContext('inDrawingRegion(0,"left") && !inDrawingRegion(4,"left")',course.context),true);
+  migrated.ids['school-stage'].value='5'; migrated.ids['school-stage'].handlers.change();
+  const stageRestored=setup({ learning:true, courseSaved:migrated.courseSaved }); assert.equal(stageRestored.ids['school-stage'].value,'5');
+  for (const stage of ['1','2','3','4']) {
+    const questions=vm.runInContext(`Object.values(mathBanks['${stage}']).flat()`,course.context);
+    assert.ok(questions.every(q=>!/[0-9]\.[0-9]|%/.test(q.title)), `stage ${stage} must not introduce decimal/percent operations`);
+  }
+  console.log('PASS: six distinct stage banks, stage storage, decimals/percentages, scaled geometry and directions.');
   console.log('PASS: harder math, fraction painting, rectangle geometry, listening color/position and reward gates.');
   console.log('PASS: touch feedback without rewards and graded English/math rewards.');
   console.log('PASS: pet stage boundaries, action unlocks, feeding evolution and restored saves.');

@@ -1,91 +1,145 @@
 'use strict';
-// Local practice banks: age bands are guidance, and difficulty remains freely selectable.
-const vocabulary = [
- ['Apple','苹果','แอปเปิล','🍎'],['Cat','猫','แมว','🐱'],['Sun','太阳','ดวงอาทิตย์','☀️'],['Tree','树','ต้นไม้','🌳'],
- ['Dog','狗','สุนัข','🐶'],['Fish','鱼','ปลา','🐟'],['Bird','鸟','นก','🐦'],['House','房子','บ้าน','🏠'],
- ['Book','书','หนังสือ','📚'],['Ball','球','ลูกบอล','⚽'],['Flower','花','ดอกไม้','🌸'],['Moon','月亮','ดวงจันทร์','🌙']
-];
-const phrases = ['Red apple','Small cat','Yellow sun','Green tree','Brown dog','Blue fish','Little bird','Big house','My book','Round ball','Pink flower','White moon'];
-const sentences = ['I like apples','This is my cat','The sun is yellow','I see a green tree','My dog can run','The fish can swim','The bird can fly','This is my house','I read a book','I have a ball','The flower is pink','I see the moon'];
-function englishItem(word, item, task, reading = '') {
- return { word, translation: `${item[1]} · ${item[2]}`, icon: item[3], color_hint: '#3884ea', guide_shape: '', task, reading };
-}
-const questions = ['What fruit do you like?','What animal is this?','What color is the sun?','What do you see?','What can your dog do?','What can a fish do?','What can a bird do?','Where do you live?','What do you read?','What do you have?','What color is the flower?','What can you see at night?'];
-const readingFacts = [
- ['Mia has a red apple. She eats it after school.','What fruit does Mia have?','An apple','画出米娅的水果','วาดผลไม้ของมีอา'],
- ['Tom has two cats. They sleep on a chair.','How many cats does Tom have?','Two cats','画出汤姆的猫','วาดแมวของทอม'],
- ['The sun is yellow. We play outside in the morning.','What color is the sun?','Yellow','画出早晨的太阳','วาดดวงอาทิตย์ตอนเช้า'],
- ['A green tree stands near our house. Birds live in it.','Where do the birds live?','In a tree','画出鸟的家','วาดบ้านของนก'],
- ['Ben has a dog. His dog runs in the park.','Where does the dog run?','In the park','画出公园','วาดสวนสาธารณะ'],
- ['A fish lives in water. It swims with other fish.','Where does a fish live?','In water','画出鱼生活的地方','วาดที่อยู่ของปลา'],
- ['A bird has two wings. It flies over the garden.','How many wings does a bird have?','Two wings','画出鸟的翅膀','วาดปีกนก'],
- ['Our house has a blue door and three windows.','How many windows are there?','Three windows','画出这栋房子','วาดบ้านหลังนี้'],
- ['Lily reads a book every evening. Her book is about animals.','What is the book about?','Animals','画出书中的动物','วาดสัตว์ในหนังสือ'],
- ['Sam plays with a ball. He plays with his sister.','Who plays with Sam?','His sister','画出一起玩球的人','วาดคนที่เล่นบอลด้วยกัน'],
- ['The garden has pink flowers. Bees visit them.','What color are the flowers?','Pink','画出花园','วาดสวนดอกไม้'],
- ['At night we see the moon. The sky is dark.','When do we see the moon?','At night','画出夜空','วาดท้องฟ้าตอนกลางคืน']
-];
-const grammar = [
- ['She ___ a book every day. (read / reads)','She reads a book every day'],['They ___ football on Sundays. (play / plays)','They play football on Sundays'],
- ['There ___ two birds in the tree. (is / are)','There are two birds in the tree'],['I ___ a blue bag. (have / has)','I have a blue bag'],
- ['He ___ swim well. (can / cans)','He can swim well'],['We ___ happy today. (is / are)','We are happy today'],
- ['The cat is ___ the table. (under)','The cat is under the table'],['This apple is ___ than that one. (big / bigger)','This apple is bigger than that one'],
- ['Yesterday I ___ to the park. (walk / walked)','Yesterday I walked to the park'],['She is ___ a picture now. (draw / drawing)','She is drawing a picture now'],
- ['I have three ___. (box / boxes)','I have three boxes'],['___ you like apples? (Do / Does)','Do you like apples']
-];
-const englishBanks = {
- '6-7': {
-  easy: vocabulary.map((v,i) => englishItem(v[0],v,`画出${v[1]}，听开头字母 ${v[0][0]}，读出并拼写单词。 · Draw, listen to the first letter, say and spell. · วาด ฟังอักษรตัวแรก อ่านและสะกด`, '')),
-  medium: vocabulary.map((v,i) => englishItem(phrases[i],v,'画出词组的意思，再读出并输入完整词组。 · Draw, say and type the phrase. · วาด อ่านและพิมพ์วลี')),
-  hard: vocabulary.map((v,i) => englishItem(sentences[i],v,'画出句子的意思，读出并输入整句。 · Draw, say and type the sentence. · วาด อ่านและพิมพ์ประโยค'))
- },
- '8-9': {
-  easy: [['School','学校','โรงเรียน','🏫'],['Teacher','老师','ครู','🧑‍🏫'],['Breakfast','早餐','อาหารเช้า','🍳'],['Family','家人','ครอบครัว','🏡'],['Kitchen','厨房','ห้องครัว','🍽️'],['Library','图书馆','ห้องสมุด','📚'],['Rainy','下雨的','ฝนตก','🌧️'],['Sunny','晴朗的','แดดออก','☀️'],['Bicycle','自行车','จักรยาน','🚲'],['Elephant','大象','ช้าง','🐘'],['Vegetables','蔬菜','ผัก','🥕'],['Saturday','星期六','วันเสาร์','📅']].map(v => englishItem(v[0],v,'画一个相关场景，读出并拼写主题词。 · Draw a scene, say and spell. · วาดฉาก อ่านและสะกด')),
-  medium: vocabulary.map((v,i) => englishItem(sentences[i],v,`${questions[i]} · 按示例回答并画出来。 · Say and type the model answer; draw it. · ตอบตามตัวอย่างแล้ววาด`)),
-  hard: readingFacts.map((r,i) => englishItem(r[2],vocabulary[i],`${r[1]} · ${r[3]}，用英语回答。 · Answer in English. · ${r[4]} แล้วตอบภาษาอังกฤษ`,r[0]))
- },
- '10': {
-  easy: grammar.map((r,i) => englishItem(r[1],vocabulary[i],`${r[0]} · 补全后读出并输入整句，画图帮助理解。 · Complete, say and type the sentence. · เติม อ่านและพิมพ์ประโยค`)),
-  medium: readingFacts.map((r,i) => englishItem(r[2],vocabulary[i],`${r[1]} · 找出短文中的依据，画图并回答。 · Find evidence, draw and answer. · หาคำตอบจากเรื่อง วาดแล้วตอบ`, `${r[0]} After that, the family talks about their day.`)),
-  hard: sentences.map((line,i) => englishItem(`${line} and I am happy`,vocabulary[i],'用 and 连接两句，读出并输入完整示例，画出自己的故事。 · Join ideas with and; say and type the model. · เชื่อมประโยคด้วย and อ่านและพิมพ์ตัวอย่าง',`${line}. I am happy.`))
- }
+// Original exercises organised using publicly described Cambridge Primary subject progression.
+// A selected stage is an ability choice, not an official grade-placement assessment.
+const recommendedStages = { '6-7':'2', '8-9':'4', '10':'6' };
+const stageProfiles = {
+ '1': {english:'个人信息、课堂物品、简单描述 · Personal information and classroom words · ข้อมูลส่วนตัวและคำในห้องเรียน',math:'20以内加减、缺数与简单数量关系 · Sums to 20 and missing numbers · บวกลบไม่เกิน 20 และเติมจำนวน'},
+ '2': {english:'家庭、食物、颜色和日常简单句 · Family, food and everyday sentences · ครอบครัว อาหารและประโยคทั่วไป',math:'100以内加减、2/5/10倍数组、半与四分之一 · Sums to 100, groups, halves and quarters · บวกลบไม่เกิน 100 กลุ่ม ครึ่งและหนึ่งในสี่'},
+ '3': {english:'学校生活、日常习惯、短文细节 · School routines and reading details · กิจวัตรโรงเรียนและรายละเอียดเรื่อง',math:'三位数、乘除、同分母分数和时间 · Three-digit numbers, times tables, fractions and time · จำนวนสามหลัก คูณหาร เศษส่วนและเวลา'},
+ '4': {english:'活动与经历、连接句子、语境理解 · Events, connected sentences and context · เหตุการณ์ ประโยคเชื่อมและบริบท',math:'整数混合运算、等值分数、面积周长、数据 · Mixed operations, equivalent fractions, measure and data · คำนวณผสม เศษส่วนเท่ากัน การวัดและข้อมูล'},
+ '5': {english:'信息文本、比较、原因与证据 · Informational texts, comparisons and reasons · ข้อความข้อมูล เปรียบเทียบและเหตุผล',math:'小数位值、小数计算、分数与百分数互化 · Decimals, fractions and percentage equivalence · ทศนิยม เศษส่วนและเปอร์เซ็นต์'},
+ '6': {english:'观点、推断、条件与未来计划 · Opinions, inference, conditions and plans · ความคิดเห็น อนุมาน เงื่อนไขและแผน',math:'分数乘除、百分数、比、负数与综合应用 · Fraction operations, percentages, ratio and applications · คำนวณเศษส่วน เปอร์เซ็นต์ อัตราส่วนและโจทย์ผสม'}
 };
-function mathItem(title, answer, prompt) { return { title, answer, prompt, groups: [] }; }
-const solvePrompt = '可以画数轴、拆分或分组，答案只填数字。 · Draw to solve; enter a number. · วาดช่วยคิด แล้วตอบเป็นตัวเลข';
-function sums(limit, count) { return Array.from({length:count},(_,i) => { const a = limit === 20 ? 7+i%9 : 27+i*3, b = limit === 20 ? 1+i%5 : 12+i%18, op = i%2 ? '−' : '+'; return mathItem(`${a} ${op} ${b} = ?`,op === '+' ? a+b : a-b,solvePrompt); }); }
-const mathBanks = {};
-for (const age of ['6-7','8-9','10']) {
- const scale = age === '10' ? 3 : age === '8-9' ? 2 : 1;
- mathBanks[age] = {
-  easy: Array.from({length:24},(_,i) => {
-   const a=24+i%12, b=17+i%9;
-   if (i%3 === 0) return mathItem(`${a} + ? = ${a+b}`,b,'填上缺少的数，可以画线段图。 · Find the missing number. · เติมจำนวนที่หายไป');
-   return mathItem(i%2 ? `${a+b} − ${b} = ?` : `${a} + ${b} = ?`,i%2 ? a : a+b,solvePrompt);
-  }),
-  medium: Array.from({length:24},(_,i) => {
-   const a=3+i%7,b=4+i%6,c=5+i%8;
-   return i%3 === 0 ? mathItem(`${a*b+c} ฿ − (${a} × ${b}) ฿ = ?`,c,'先算购买费用，再算找零。 · Find the cost, then the change. · หาราคาก่อน แล้วหาเงินทอน') : i%2 ? mathItem(`(${a*b} ÷ ${a}) + ${c} = ?`,b+c,solvePrompt) : mathItem(`${a} × ${b} + ${c} = ?`,a*b+c,solvePrompt);
-  }),
-  hard: Array.from({length:24},(_,i) => {
-   const a=127*scale+i*13,b=48+i*7;
-   if (i%4 === 0) return mathItem(`${a} + ${b} − 39 = ?`,a+b-39,solvePrompt);
-   if (i%4 === 1) return mathItem('1/2 + 1/4 = ?',.75,'画四等份理解分数，可填分数或小数。 · Use four equal parts. · วาดสี่ส่วนเท่ากัน');
-   if (i%4 === 2) return mathItem(`${((12+i)/10).toFixed(1)} + 0.7 = ?`,(19+i)/10,'对齐小数点再计算。 · Align decimal points. · จัดจุดทศนิยมให้ตรงกัน');
-   const w=4+i%5,h=3+i%4; return mathItem(`${w} cm × ${h} cm`,2*(w+h),'求长方形周长（cm），先画示意图。 · Find the perimeter. · หาความยาวรอบรูป');
-  })
+function mathItem(title,answer,topic,prompt='') { return {title,answer,topic,groups:[],prompt:`${topic} · ${prompt || '画图帮助理解，答案只填数字或分数。 · Draw to reason; enter a number or fraction. · วาดช่วยคิด ตอบเป็นตัวเลขหรือเศษส่วน'}`}; }
+const englishBanks={},mathBanks={};
+const englishSeeds = {
+ '1': [
+ ['Hello','Hello, my name is Mia','Mia greets a new friend. Her name is Mia.','What is her name?','Mia'],
+ ['Pencil','This is a pencil','A boy puts a pencil in his bag.','What does he put in his bag?','A pencil'],
+ ['Desk','The desk is big','The teacher has a big desk.','What is big?','The desk'],
+ ['Chair','This chair is blue','A girl sits on a blue chair.','What color is the chair?','Blue'],
+ ['Hand','This is my hand','I raise my hand to speak.','What do I raise?','My hand'],
+ ['Eye','I have two eyes','A child draws two eyes on a face.','How many eyes?','Two'],
+ ['Red','It is red','The teacher holds a red card.','What color is the card?','Red'],
+ ['Blue','It is blue','A blue cup is on the desk.','What is on the desk?','A blue cup'],
+ ['Happy','I am happy','Mia smiles. She feels happy.','How does Mia feel?','Happy'],
+ ['Sad','I am sad','Tom feels sad when his toy breaks.','How does Tom feel?','Sad'],
+ ['Stand','Please stand up','The class stands when the teacher asks.','What do the children do?','They stand'],
+ ['Sit','Please sit down','The teacher asks the class to sit.','What does the teacher ask?','Sit down'] ],
+ '2': [
+ ['Apple','Red apple','Mia packs an apple for lunch. It is red.','What does Mia pack?','An apple'],
+ ['Cat','Small cat','A small cat sleeps near the door.','Where does the cat sleep?','Near the door'],
+ ['Sun','Yellow sun','The sun shines over the garden.','What shines?','The sun'],
+ ['Tree','Green tree','A green tree grows beside our house.','What grows beside the house?','A tree'],
+ ['Mother','My mother cooks','My mother makes rice for dinner.','What does she make?','Rice'],
+ ['Brother','My brother can swim','Ben is my brother. He swims after school.','What can Ben do?','Swim'],
+ ['Breakfast','I eat breakfast','I eat eggs for breakfast before school.','What do I eat?','Eggs'],
+ ['Water','I drink water','I drink water after playing.','What do I drink?','Water'],
+ ['Bedroom','This is my bedroom','My bed is in my bedroom.','Where is my bed?','In my bedroom'],
+ ['Garden','We play in the garden','We play ball in the garden.','Where do we play?','In the garden'],
+ ['Shoes','My shoes are black','I wear black shoes to school.','What color are my shoes?','Black'],
+ ['Dress','The dress is pink','Sara wears a pink dress.','What does Sara wear?','A pink dress'] ],
+ '3': [
+ ['Classroom','We study in the classroom','Our class reads together in the classroom every morning.','Where do we read?','In the classroom'],
+ ['Timetable','We follow a timetable','Our timetable shows art on Tuesday and music on Thursday.','When is art?','On Tuesday'],
+ ['Homework','I do my homework after school','I finish homework before I play outside.','What do I do first?','Homework'],
+ ['Bicycle','I ride a bicycle to school','Leo rides to school because it is near his home.','How does Leo travel?','By bicycle'],
+ ['Library','We borrow books from the library','Nina borrows a science book from the school library.','What book does Nina borrow?','A science book'],
+ ['Usually','I usually get up at seven','On school days Sam gets up at seven. On Sunday he gets up at eight.','When does Sam get up on school days?','At seven'],
+ ['Weekend','I visit my grandparents at the weekend','Every Saturday we visit our grandparents. We help in their garden.','Who do we visit?','Our grandparents'],
+ ['Lunch','We eat lunch at noon','The pupils eat lunch at twelve. Then they play.','When is lunch?','At twelve'],
+ ['Sport','My favorite sport is tennis','Ava likes tennis more than football.','What sport does Ava prefer?','Tennis'],
+ ['Weather','It is windy today','The wind moves the leaves and a kite flies high.','What is the weather like?','Windy'],
+ ['Music','She plays music after school','Rita plays the piano after school before dinner.','What instrument does Rita play?','The piano'],
+ ['Practice','I practice reading every day','Omar reads a page each day to improve.','How often does Omar read?','Every day'] ],
+ '4': [
+ ['Museum','We visited a museum yesterday','Our class visited a museum yesterday. We saw old boats and drew them in notebooks.','What did the class see?','Old boats'],
+ ['Journey','The journey took two hours','A bus journey took two hours. We stopped once to eat.','How long did the journey take?','Two hours'],
+ ['Although','Although it rained, we played inside','It rained all morning. Instead of going outside we played board games indoors.','Where did we play?','Indoors'],
+ ['Before','We washed our hands before lunch','First we washed our hands. Next we ate lunch. Finally we cleaned the table.','What happened before lunch?','We washed our hands'],
+ ['After','After the match, we thanked the coach','The team lost but thanked the coach for helping them.','Who did the team thank?','The coach'],
+ ['Because','I wore a coat because it was cold','The temperature fell. Mila put on a coat to stay warm.','Why did Mila wear a coat?','It was cold'],
+ ['While','I read while my sister painted','Two sisters spent an afternoon at home. One read a story and the other painted a landscape.','What did the other sister do?','She painted'],
+ ['Experiment','We recorded the experiment results','We planted seeds in two pots. One pot had water and the other did not.','How many pots did we use?','Two pots'],
+ ['Invitation','I wrote an invitation to my friend','Zoe invited her friend to a picnic next Saturday.','When is the picnic?','Next Saturday'],
+ ['Directions','Turn left at the school','Walk past the park. At the school turn left to find the library.','Where should you turn left?','At the school'],
+ ['Describe','Please describe the animal','The creature has soft fur, long ears and likes carrots.','Which animal fits the description?','A rabbit'],
+ ['Compare','This bridge is longer than that bridge','The old bridge is ten metres long. The new bridge is fifteen metres long.','Which bridge is longer?','The new bridge'] ],
+ '5': [
+ ['Habitat','A habitat provides food and shelter','A wetland gives birds food and shelter. When it dries out, the birds must move.','Why must the birds move?','The wetland dries out'],
+ ['Recycle','We recycle paper to reduce waste','A club collects used paper each Friday. The paper is sent to be recycled rather than thrown away.','What does the club collect?','Used paper'],
+ ['Evidence','The footprints are evidence of an animal','A researcher finds fresh footprints beside a river. The tracks suggest an animal visited recently.','What suggests a recent visit?','Fresh footprints'],
+ ['Opinion','I think walking is better for short trips','Maya says walking is the best way to travel nearby. Her friend prefers a bicycle.','Who prefers walking?','Maya'],
+ ['Population','The population of the town has grown','A town had fewer residents last year. New homes attracted families and now more people live there.','Why did families move there?','New homes'],
+ ['Resource','Clean water is a valuable resource','Our class checks taps after lessons because wasting water reduces an important resource.','What resource do we protect?','Clean water'],
+ ['Pollution','Pollution can harm river animals','Litter enters a stream after a storm. Volunteers collect it to protect fish.','Who collects the litter?','Volunteers'],
+ ['Temperature','The temperature is higher in the afternoon','A thermometer shows eighteen degrees at dawn and twenty six at noon.','When is it warmer?','At noon'],
+ ['Conserve','We should conserve electricity','The school switches off lights in empty rooms to use less electricity.','How does the school save electricity?','It switches off lights'],
+ ['Balance','A balanced diet includes different foods','An athlete eats vegetables, fruit and grains instead of only sweets.','What does the athlete avoid eating alone?','Sweets'],
+ ['Information','We checked the information in two books','Two books gave different dates. A learner checked a museum website before writing.','Why did the learner check another source?','The dates were different'],
+ ['Conclusion','Our conclusion is based on the results','Two plants were observed for a month. The watered plant grew more, supporting our conclusion.','Which plant grew more?','The watered plant'] ],
+ '6': [
+ ['Prediction','If it rains, we will stay inside','Dark clouds gather and the forecast predicts rain. The group plans indoor games if the rain starts.','What will the group do if it rains?','Play indoor games'],
+ ['Persuade','We should walk because it reduces pollution','A pupil asks classmates to walk short distances. She explains that fewer car journeys mean cleaner air.','What reason supports walking?','Cleaner air'],
+ ['Inference','The wet ground suggests that it rained','The sky is clear now but the road is wet and umbrellas are drying by the door.','What probably happened earlier?','It rained'],
+ ['Alternative','We could take the train instead of driving','The train uses less fuel per traveller. The family chooses it even though they must leave earlier.','Which transport did they choose?','The train'],
+ ['Reliable','We need a reliable source for our report','A writer compares an unnamed post with a measured weather record before describing a storm.','Which source is more reliable?','The weather record'],
+ ['Responsibility','Everyone has a responsibility to protect nature','A class assigns jobs for a cleanup. Each pupil completes a task so the shared space becomes cleaner.','Why does each pupil have a job?','To share the work'],
+ ['Contrast','The first plan is cheaper but the second is faster','Two travel plans have different costs and journey times. A family with little time chooses the faster plan.','Which plan does the family choose?','The second plan'],
+ ['Consequence','If we waste water, there may be less for everyone','A village has limited water in summer. Residents repair leaks before shortages become worse.','Why do residents repair leaks?','To save water'],
+ ['Evaluate','We should evaluate both benefits and costs','A new playground would create space to exercise but would remove part of a garden. Residents discuss both effects.','What would be removed?','Part of a garden'],
+ ['Future','I will volunteer at the library next month','Noah plans to help younger readers next month. He asks a librarian how to prepare.','Who will Noah help?','Younger readers'],
+ ['Summary','A summary includes the main ideas','An article describes a forest and its animals in detail. A learner writes a short version using its key points.','What should the short version include?','The key points'],
+ ['Justify','We must justify our decision with evidence','The team chooses a safer route after studying maps and weather reports rather than guessing.','What supports the decision?','Maps and weather reports'] ]
+};
+for (const stage of Object.keys(stageProfiles)) {
+ const seeds=englishSeeds[stage];
+ const item=(word,reading,task,topic) => ({word,reading,task,topic,translation:'',icon:'📚',color_hint:'#3884ea',guide_shape:''});
+ englishBanks[stage]={
+  easy:seeds.map(r=>item(r[0],'','画出主题场景，听读并拼写关键词。 · Draw, say and spell the key word. · วาด อ่านและสะกดคำสำคัญ','Vocabulary · 词汇 · คำศัพท์')),
+  medium:seeds.map(r=>item(r[1],'','读出并输入完整示例句，画图帮助理解。 · Say and type the model sentence. · อ่านและพิมพ์ประโยคตัวอย่าง','Sentence use · 句子运用 · การใช้ประโยค')),
+  hard:seeds.map(r=>item(r[4],r[2],`${r[3]} · 按短文回答，可先听示例。 · Answer from the passage; listen to a model if needed. · ตอบจากเรื่อง ฟังตัวอย่างได้`,'Reading detail / inference · 阅读细节与推断 · รายละเอียดและอนุมาน'))
  };
 }
-const ageDescriptions = {
- '6-7': { english: '字母、单词、词组与简单句 · Letters, words and sentences · อักษร คำศัพท์และประโยค', math: '数与大小、20以内加减、图形 · Numbers, sums to 20 and shapes · จำนวน บวกลบไม่เกิน 20 และรูปทรง' },
- '8-9': { english: '主题词汇、问答与短文 · Vocabulary, questions and reading · คำศัพท์ ถามตอบและอ่าน', math: '100以内加减、乘除、时间与钱币 · Sums to 100, times tables, time and money · บวกลบไม่เกิน 100 คูณหาร เวลาและเงิน' },
- '10': { english: '语法、阅读与引导表达 · Grammar, reading and guided writing · ไวยากรณ์ อ่านและเขียนตามตัวอย่าง', math: '多位数、分数、小数、面积与周长 · Larger numbers, fractions, decimals, area and perimeter · จำนวนหลายหลัก เศษส่วน ทศนิยม พื้นที่และรอบรูป' }
-};
-
-englishBanks['6-7'].easy.forEach((item,i) => { if (i < levels.length) { item.guide_shape = levels[i].guide_shape; item.color_hint = levels[i].color_hint; } });
-
-// Longer responses use topic labels rather than presenting a single noun as a sentence translation.
-for (const age of Object.keys(englishBanks)) for (const difficulty of ['easy','medium','hard']) {
- if (age !== '6-7' || difficulty !== 'easy') englishBanks[age][difficulty].forEach(item => { item.translation = `主题 · Topic · หัวข้อ: ${item.translation}`; });
+const numericPrompt='答案只填数字、分数或小数。 · Enter a number, fraction or decimal. · ตอบเป็นตัวเลข เศษส่วนหรือทศนิยม';
+for (const stage of Object.keys(stageProfiles)) {
+ const bank={easy:[],medium:[],hard:[]};
+ for (let i=0;i<24;i++) {
+  let e,m,h;
+  if (stage==='1') {
+   const a=7+i%5,b=3+i%4,total=a+b;
+   e=mathItem(`${a} + ${b} = ?`,total,'Addition within 20 · 20以内加法 · บวกไม่เกิน 20');
+   m=mathItem(`${total} − ? = ${a}`,b,'Missing number within 20 · 缺数关系 · เติมจำนวน');
+   h=mathItem(`${total} − ${b} + 2 = ?`,a+2,'Number story · 数量关系 · เรื่องจำนวน',`原有 ${total} 支笔，送出 ${b} 支，再得到2支，还剩多少？ · Give away ${b} of ${total} pencils, then get 2. How many remain? · มี ${total} แท่ง ให้ไป ${b} แล้วได้เพิ่ม 2 เหลือเท่าไร`);
+  } else if (stage==='2') {
+   const a=24+i,b=17+i%9,f=[2,5,10][i%3],n=3+i%7;
+   e=mathItem(`${a} + ${b} = ?`,a+b,'Two-digit addition · 两位数加法 · บวกสองหลัก');
+   m=mathItem(`${f} × ${n} = ?`,f*n,'Equal groups: 2, 5, 10 · 等量分组 · กลุ่มเท่ากัน');
+   h=i%2 ? mathItem(`${a+b} ฿ − ${b} ฿ = ?`,a,'Money and change · 钱币找零 · เงินทอน') : mathItem(`${2*n} ÷ 2 = ?`,n,'Half a quantity · 数量的一半 · ครึ่งหนึ่งของจำนวน');
+  } else if (stage==='3') {
+   const a=126+i*11,b=38+i*2,n=3+i%6,d=4+i%5;
+   e=mathItem(`${a} − ${b} = ?`,a-b,'Three-digit subtraction · 三位数减法 · ลบสามหลัก');
+   m=i%2 ? mathItem(`${a*n} ÷ ${n} = ?`,a,'Division by one digit · 一位数除法 · หารด้วยหนึ่งหลัก') : mathItem(`${a} × ${n} = ?`,a*n,'Multiplication by one digit · 一位数乘法 · คูณด้วยหนึ่งหลัก');
+   h=i%3===0 ? mathItem(`1/${d} + 2/${d} = ?`,3/d,'Same-denominator fractions · 同分母分数 · เศษส่วนตัวส่วนเท่ากัน') : i%3===1 ? mathItem('09:10 → 09:45',35,'Time interval · 时间间隔 · ช่วงเวลา',numericPrompt+' How many minutes? · 多少分钟？ · กี่นาที') : mathItem(`${n}, ${n+2}, ${n+4}`,3*n+6,'Total from data · 数据总量 · ผลรวมข้อมูล',numericPrompt+' Find the total. · 求总量。 · หาผลรวม');
+  } else if (stage==='4') {
+   const a=1024+i*73,b=148+i*19,w=4+i%5,hg=3+i%4;
+   e=mathItem(`${a} + ${b} − 125 = ?`,a+b-125,'Whole-number operations · 整数混合运算 · คำนวณจำนวนเต็ม');
+   m=mathItem(`${a} × ${12+i%7} = ?`,a*(12+i%7),'Two-digit multiplier · 两位数乘数 · ตัวคูณสองหลัก');
+   h=i%3===0 ? mathItem(`2/${4+i%3} = ?/${(4+i%3)*3}`,6,'Equivalent fractions · 等值分数 · เศษส่วนเท่ากัน',numericPrompt+' Enter the missing numerator. · 填分子。 · เติมตัวเศษ') : i%3===1 ? mathItem(`${w} cm × ${hg} cm`,2*(w+hg),'Rectangle perimeter · 长方形周长 · รอบรูปสี่เหลี่ยม',numericPrompt+' Find perimeter. · 求周长。 · หารอบรูป') : mathItem(`${w}, ${w+2}, ${w+4}`,w+2,'Mean of data · 数据平均数 · ค่าเฉลี่ย',numericPrompt+' Find the mean. · 求平均数。 · หาค่าเฉลี่ย');
+  } else if (stage==='5') {
+   const a=12+i,b=5+i%8;
+   e=mathItem(`${(a/10).toFixed(1)} × 10 = ?`,a,'Decimal place value · 小数位值 · ค่าประจำหลักทศนิยม');
+   m=i%2 ? mathItem(`${(a/10).toFixed(1)} × ${b} = ?`,a*b/10,'Decimal times whole number · 小数乘整数 · ทศนิยมคูณจำนวนเต็ม') : mathItem(`${(a/10).toFixed(1)} + ${(b/10).toFixed(1)} = ?`,(a+b)/10,'Decimal addition · 小数加法 · บวกทศนิยม');
+   h=i%3===0 ? mathItem(`${2+i%7}/10 = ?%`,(2+i%7)*10,'Fraction to percentage · 分数与百分数 · เศษส่วนเป็นเปอร์เซ็นต์',numericPrompt+' Enter the percent number without %. · 只填百分数数字。 · ใส่ตัวเลขไม่ใส่ %') : i%3===1 ? mathItem(`1/${2+i%4} of ${(2+i%4)*b} = ?`,b,'Fraction of a quantity · 数量的分数 · เศษส่วนของจำนวน') : mathItem(`${(a/10).toFixed(1)} m × 3 m`,a*3/10,'Area with decimal lengths · 小数长度面积 · พื้นที่จากความยาวทศนิยม',numericPrompt+' Find area in square metres. · 求平方米数。 · หาพื้นที่เป็นตารางเมตร');
+  } else {
+   const d=3+i%4,n=12+i*2,p=10+(i%6)*5;
+   e=i%2 ? mathItem(`2/${d} ÷ 2 = ?`,1/d,'Fraction division · 分数除法 · หารเศษส่วน') : mathItem(`1/${d} + 1/${d*2} = ?`,3/(2*d),'Different denominators · 异分母分数 · ตัวส่วนต่างกัน');
+   m=i%2 ? mathItem(`2:3 · Total ${n*5}`,n*2,'Ratio allocation · 按比分配 · แบ่งตามอัตราส่วน',numericPrompt+' Find the first share. · 求第一份数量。 · หาส่วนแรก') : mathItem(`${p}% of ${n*20} = ?`,n*20*p/100,'Percentage of a quantity · 百分数应用 · เปอร์เซ็นต์ของจำนวน');
+   h=i%3===0 ? mathItem(`−${n} + ${n-5} = ?`,-5,'Negative-number change · 负数变化 · การเปลี่ยนจำนวนลบ') : i%3===1 ? mathItem(`${n*20} − ${p}% of ${n*20} = ?`,n*20*(1-p/100),'Discount reasoning · 折扣综合应用 · คำนวณส่วนลด') : mathItem(`${n}, ${n+4}, ${n+8}, ${n+12}`,n+6,'Mean and data reasoning · 平均数推理 · เหตุผลจากค่าเฉลี่ย',numericPrompt+' Find the mean. · 求平均数。 · หาค่าเฉลี่ย');
+  }
+  bank.easy.push(e);bank.medium.push(m);bank.hard.push(h);
+ }
+ mathBanks[stage]=bank;
 }
 
-for (const age of Object.keys(ageDescriptions)) ageDescriptions[age].math = '基础：100以内加减与填空；进阶：乘除和两步计算；挑战：综合运算 · Sums, missing numbers, two-step and mixed problems · บวกลบ เติมจำนวน คำนวณสองขั้นและโจทย์ผสม';
+englishBanks['2'].easy.slice(0,4).forEach((item,index)=>{item.guide_shape=levels[index].guide_shape;item.color_hint=levels[index].color_hint;});

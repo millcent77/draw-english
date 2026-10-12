@@ -8,28 +8,39 @@ try {
  const saved = JSON.parse(localStorage.getItem('draw-say-drawing-v1'));
  if (saved) {
   for (const subject of ['english','math']) if (practiceOptions[subject].some(([id]) => id === saved.modes?.[subject])) drawingState.modes[subject] = saved.modes[subject];
-  for (const [key,value] of Object.entries(saved.positions || {})) if (/^(6-7|8-9|10):(easy|medium|hard):(fractions|geometry|listening)$/.test(key) && Number.isInteger(value) && value >= 0 && value < 12) drawingState.positions[key] = value;
+  for (const [key,value] of Object.entries(saved.positions || {})) if (/^(s[1-6]|6-7|8-9|10):(easy|medium|hard):(fractions|geometry|listening)$/.test(key) && Number.isInteger(value) && value >= 0 && value < 12) drawingState.positions[key] = value;
  }
 } catch { /* Existing pet and course storage remains independent. */ }
 let drawingCells = [], drawingQuestion = null, drawingRewarded = false, drawingHeard = false;
 function saveDrawing() { try { localStorage.setItem('draw-say-drawing-v1',JSON.stringify(drawingState)); } catch { $('drawing-status').textContent = '无法保存进度 · Progress not saved · บันทึกไม่ได้'; } }
+for (const [key,value] of Object.entries({...drawingState.positions})) {
+ const [age,difficulty,mode]=key.split(':');
+ if (recommendedStages[age]) drawingState.positions[`s${recommendedStages[age]}:${difficulty}:${mode}`] ??= value;
+}
 const drawingMode = () => drawingState.modes[learning.subject];
-const drawingKey = () => `${learning.age}:${learning.difficulty}:${drawingMode()}`;
-function makeDrawingQuestion(mode,index,difficulty) {
- const rank = {easy:0,medium:1,hard:2}[difficulty];
- if (mode === 'fractions') {
-  const denominator = [4,6,8,10,12][(index+rank)%5], numerator = 1+(index+rank*2)%(denominator-1);
-  return {mode, denominator, numerator, count:denominator, answer:numerator/denominator,
-   title:`${numerator}/${denominator}`, prompt:'每格是一等份。涂出这个分数，再填写等值分数或小数。 · Paint the fraction, then enter its value. · ระบายเศษส่วน แล้วตอบเป็นเศษส่วนหรือทศนิยม'};
+const drawingKey = () => `s${learning.stage}:${learning.difficulty}:${drawingMode()}`;
+function makeDrawingQuestion(mode,index,difficulty,stage='2') {
+ const rank={easy:0,medium:1,hard:2}[difficulty],level=Number(stage);
+ if (mode==='fractions') {
+  const partitions={1:[2],2:[4],3:[3,5,10],4:[6,8,12],5:[10],6:[5,8,10]};
+  const choices=partitions[level],denominator=choices[(index+rank)%choices.length],numerator=1+(index+rank*2)%(denominator-1);
+  const total=denominator*(3+index%4),answer=level===1 ? numerator : level===5 ? numerator/denominator*100 : level===6 ? total*numerator/denominator : numerator/denominator;
+  const title=level===5 ? `${numerator}/${denominator} → ?%` : level===6 ? `${numerator}/${denominator} of ${total}` : `${numerator}/${denominator}`;
+  const prompt=level===1 ? '涂出一半，填涂色格数。 · Paint half; enter the painted cell count. · ระบายครึ่งหนึ่งแล้วตอบจำนวนช่อง' : level===5 ? '涂出分数，再填写百分数数字（不填%）。 · Paint then enter the percentage number. · ระบายแล้วตอบตัวเลขเปอร์เซ็นต์' : level===6 ? `先画出分数模型，再求 ${total} 的这个分数。 · Paint the model, then find this fraction of ${total}. · ระบายแบบจำลองแล้วหาเศษส่วนของ ${total}` : '每格是一等份。涂出分数，再填写等值分数或小数。 · Paint and enter the fraction. · ระบายแล้วตอบเศษส่วน';
+  return {mode,denominator,numerator,count:denominator,answer,title,prompt};
  }
- if (mode === 'geometry') {
-  const width=3+(index+rank)%4,height=2+(index+rank)%3,perimeter=index%2 === 1;
-  return {mode,width,height,count:64,answer:perimeter ? 2*(width+height) : width*height,
-   title:`${width} × ${height}`,prompt:`画出宽 ${width} 格、高 ${height} 格的实心长方形，计算${perimeter ? '周长' : '面积'}（每格边长1）。 · Paint a solid rectangle ${width} wide and ${height} high; find ${perimeter ? 'perimeter' : 'area'}. · ระบายสี่เหลี่ยมกว้าง ${width} สูง ${height} แล้วหา${perimeter ? 'ความยาวรอบรูป' : 'พื้นที่'}`};
+ if (mode==='geometry') {
+  const width=level===1 ? 2+(index+rank)%3 : Math.min(7,level+1+(index+rank)%2),height=level<=2 ? 1+(index+rank)%2 : 2+(index+rank)%3;
+  const perimeter=level>=3 && index%2===1,unit=level===5 ? .5 : level===6 ? 1.5 : 1;
+  const answer=level<=2 ? width*height : perimeter ? 2*(width+height)*unit : width*height*unit*unit;
+  return {mode,width,height,count:64,answer,title:`${width} × ${height} · Unit ${unit}`,
+   prompt:`画宽 ${width} 格、高 ${height} 格的实心长方形。${level<=2 ? '求总格数' : perimeter ? '求周长' : '求面积'}，每格边长 ${unit}。 · Draw ${width} wide and ${height} high; find ${level<=2 ? 'cell count' : perimeter ? 'perimeter' : 'area'}, cell side ${unit}. · วาดกว้าง ${width} สูง ${height} หา${level<=2 ? 'จำนวนช่อง' : perimeter ? 'รอบรูป' : 'พื้นที่'} แต่ละช่องยาว ${unit}`};
  }
- const color=['red','blue','green'][(index+rank)%3],shape=['circle','square','triangle'][(index+rank)%3],number=2+(index+rank)%5,region=index%2 ? 'above' : 'below';
- return {mode,color,shape,number,region,count:20,title:`Draw ${number} ${color} ${shape}s ${region} the tree.`,
-  prompt:'先听英语指令，再选颜色、形状，在树的上方或下方画出来。点击同一个图形可以擦除。 · Listen, choose tools and draw; tap again to erase. · ฟัง เลือกสีและรูปทรง แล้ววาด แตะอีกครั้งเพื่อลบ'};
+ const color=['red','blue','green'][(index+rank)%3],shape=['circle','square','triangle'][(index+rank)%3],number=2+(index+rank)%5;
+ const regions=level>=3 ? ['above','below','left','right'] : ['below','above'],region=regions[(index+rank)%regions.length];
+ const prefix=level>=5 ? 'After choosing the correct colour and shape, draw' : level>=3 ? 'Listen carefully and draw' : 'Draw';
+ return {mode,color,shape,number,region,count:20,title:`${prefix} ${number} ${color} ${shape}s ${region} ${level>=5 ? 'the middle tree without adding other shapes' : 'the tree'}.`,
+  prompt:'听完英语指令，按数量、颜色、形状和方位绘图。 · Listen and draw by number, colour, shape and position. · ฟังแล้ววาดตามจำนวน สี รูปทรงและตำแหน่ง'};
 }
 function renderDrawingMode() {
  const select=$('practice-mode'); select.replaceChildren();
@@ -45,9 +56,9 @@ function renderDrawingMode() {
 }
 function renderDrawingQuestion() {
  const index=drawingState.positions[drawingKey()] || 0;
- drawingQuestion=makeDrawingQuestion(drawingMode(),index,learning.difficulty);
+ drawingQuestion=makeDrawingQuestion(drawingMode(),index,learning.difficulty,learning.stage);
  drawingCells=Array(drawingQuestion.count).fill(null); drawingRewarded=false; drawingHeard=false;
- $('drawing-progress').textContent=`第 ${index+1} 题，共 12 题 · Question ${index+1} of 12 · ข้อ ${index+1} จาก 12`;
+ $('drawing-progress').textContent=`Stage ${learning.stage} · 第 ${index+1} 题，共 12 题 · Question ${index+1} of 12 · ข้อ ${index+1} จาก 12`;
  $('drawing-title').textContent=drawingQuestion.title; $('drawing-prompt').textContent=drawingQuestion.prompt;
  const listening=drawingQuestion.mode === 'listening';
  $('drawing-listen').hidden=!listening; $('drawing-tools').hidden=!listening;
@@ -60,7 +71,7 @@ function renderDrawingQuestion() {
 function renderDrawingBoard() {
  const board=$('drawing-board'),q=drawingQuestion; board.replaceChildren();
  board.setAttribute('data-kind',q.mode);
- if (q.mode === 'fractions') board.style.setProperty('--fraction-columns',String(q.denominator === 6 ? 3 : q.denominator === 10 ? 5 : 4));
+ if (q.mode === 'fractions') board.style.setProperty('--fraction-columns',String([2,3,5].includes(q.denominator) ? q.denominator : q.denominator === 6 ? 3 : q.denominator === 10 ? 5 : 4));
  for (let index=0;index<q.count;index++) {
   if (q.mode === 'listening' && index === 10) {const tree=document.createElement('div');tree.className='drawing-tree';tree.textContent='🌳';tree.setAttribute('aria-label','树 · Tree · ต้นไม้');board.appendChild(tree);}
   const button=document.createElement('button');button.type='button';button.className='drawing-cell';
@@ -85,7 +96,7 @@ function paintDrawingCell(button,index) {
 function validDrawing(question,cells) {
  const selected=cells.map((cell,index)=>cell ? index : -1).filter(index=>index>=0);
  if (question.mode === 'fractions') return selected.length === question.numerator;
- if (question.mode === 'listening') return selected.length === question.number && selected.every(index => cells[index].color === question.color && cells[index].shape === question.shape && (question.region === 'above' ? index<10 : index>=10));
+ if (question.mode === 'listening') return selected.length === question.number && selected.every(index => cells[index].color === question.color && cells[index].shape === question.shape && (inDrawingRegion(index,question.region)));
  if (selected.length !== question.width*question.height) return false;
  const xs=selected.map(index=>index%8),ys=selected.map(index=>Math.floor(index/8));
  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
@@ -116,3 +127,10 @@ $('drawing-form').addEventListener('submit',event => {
  $('drawing-check').disabled=true;$('drawing-answer').disabled=true;$('drawing-clear').disabled=true;$('drawing-next').hidden=false;
 });
 $('drawing-next').addEventListener('click',() => {if (!drawingRewarded || speaking) return;drawingState.positions[drawingKey()]=((drawingState.positions[drawingKey()] || 0)+1)%12;saveDrawing();renderDrawingQuestion();});
+
+function inDrawingRegion(index,region) {
+ if (region==='above') return index<10;
+ if (region==='below') return index>=10;
+ if (region==='left') return index%5<2;
+ return index%5>2;
+}
