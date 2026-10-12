@@ -4,7 +4,7 @@ const vm = require('node:vm');
 function element(extra = {}) {
   return Object.assign({ textContent: '', value: '', hidden: false, children: [], handlers: {}, dataset: {}, style: { setProperty() {} }, classList: { toggle() {}, add() {}, remove() {} }, setAttribute(name, value) { (this.attributes ||= {})[name] = value; }, addEventListener(name, fn) { const previous = this.handlers[name]; this.handlers[name] = previous ? (...args) => { previous(...args); return fn(...args); } : fn; }, appendChild(child) { this.children.push(child); }, replaceChildren(...children) { this.children = children; }, focus() {}, scrollIntoView() {} }, extra);
 }
-function setup({ recognition = true, saved = null, protocol = 'http:', learning = false } = {}) {
+function setup({ recognition = true, saved = null, protocol = 'http:', learning = false, courseSaved = null } = {}) {
   const ids = {};
   for (const match of fs.readFileSync('index.html', 'utf8').matchAll(/id="([^"]+)"/g)) ids[match[1]] = element();
   ids['speech-rate'].value = '1';
@@ -12,14 +12,14 @@ function setup({ recognition = true, saved = null, protocol = 'http:', learning 
   Object.assign(ids.canvas, { width: 600, height: 400, getContext: () => ({ clearRect() {} }) });
   const colors = ['#ed4545', '#f4bd24', '#3884ea', '#35a96e'].map(color => element({ dataset: { color }, textContent: 'color' }));
   ids.celebration.hidden = true;
-  let timers = [], stored = saved, spoken = [], session; const courseStore = {};
+  let timers = [], stored = saved, spoken = [], session; const courseStore = { 'draw-say-courses-v1': courseSaved };
   const speech = { getVoices: () => [{ lang: 'en-US' }], addEventListener() {}, cancel() {}, speak(u) { spoken.push(u); queueMicrotask(() => u.onend()); } };
   class Recognition { constructor() { session = this; } start(track) { this.track = track; } stop() {} abort() { this.onerror?.({ error: 'aborted' }); } }
   const context = { document: { getElementById: id => ids[id], querySelector: () => (ids.lesson ||= element()), querySelectorAll: () => colors, createElement: () => element(), createElementNS: () => element(), createTextNode: text => ({ textContent: text }) }, window: { speechSynthesis: speech, SpeechSynthesisUtterance: true, matchMedia: () => ({ matches: true }), location: { protocol } }, localStorage: { getItem: key => key === 'draw-say-pet-v1' ? stored : courseStore[key], setItem: (key, value) => { if (key === 'draw-say-pet-v1') stored = value; else courseStore[key] = value; } }, SpeechSynthesisUtterance: function(text) { this.text = text; }, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { timers = timers.filter(item => item !== t); }, Promise, Math };
   if (recognition) context.window.SpeechRecognition = Recognition;
   vm.createContext(context); vm.runInContext(fs.readFileSync('pets.js', 'utf8'), context); vm.runInContext(fs.readFileSync('app.js', 'utf8'), context);
-  if (learning) vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context);
-  return { ids, context, spoken, get session() { return session; }, get saved() { return stored; }, async flush() { for (let i = 0; i < 100; i++) { await Promise.resolve(); const short = timers.filter(t => t.ms < 12000); timers = timers.filter(t => t.ms >= 12000); short.forEach(t => t.fn()); } }, transcript(text) { const result = [{ transcript: text }]; result.isFinal = true; session.onresult({ resultIndex: 0, results: [result] }); } };
+  if (learning) { vm.runInContext(fs.readFileSync('curriculum.js', 'utf8'), context); vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context); }
+  return { ids, context, spoken, get session() { return session; }, get saved() { return stored; }, get courseSaved() { return courseStore['draw-say-courses-v1']; }, async flush() { for (let i = 0; i < 100; i++) { await Promise.resolve(); const short = timers.filter(t => t.ms < 12000); timers = timers.filter(t => t.ms >= 12000); short.forEach(t => t.fn()); } }, transcript(text) { const result = [{ transcript: text }]; result.isFinal = true; session.onresult({ resultIndex: 0, results: [result] }); } };
 }
 assert.equal((fs.readFileSync('index.html', 'utf8').match(/src="learning.js"/g) || []).length, 1);
 const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() {} });
@@ -74,24 +74,29 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   assert.equal(course.ids.guide.style.opacity, '0');
   course.ids.subject.value = 'math'; course.ids.subject.handlers.change();
   assert.equal(course.ids.practice.hidden, true);
-  assert.equal(course.ids['math-practice'].hidden, false);
-  assert.equal(course.ids['math-title'].textContent, '6 × 7 = ?');
-  assert.match(course.ids['math-progress'].textContent, /第 1 题，共 8 题/);
-  course.ids['math-answer'].value = ''; course.ids['math-form'].handlers.submit({ preventDefault() {} });
-  assert.equal(course.ids.points.textContent, '⭐ 0');
-  course.ids['math-answer'].value = '42'; course.ids['math-form'].handlers.submit({ preventDefault() {} });
+  course.ids['math-answer'].value = '3'; course.ids['math-form'].handlers.submit({ preventDefault() {} });
   assert.equal(course.ids.points.textContent, '⭐ 20');
   course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 20');
-  course.ids['math-next'].handlers.click(); assert.match(course.ids['math-title'].textContent, /24 ÷ 6/);
-  course.ids.difficulty.value = 'medium'; course.ids.difficulty.handlers.change();
-  course.ids['math-answer'].value = '2'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 20');
-  course.ids['math-answer'].value = '45'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 35');
-  course.ids.subject.value = 'english'; course.ids.subject.handlers.change(); assert.equal(course.ids['lesson-word'].textContent, 'Red apple');
-  course.ids.subject.value = 'math'; course.ids.subject.handlers.change(); course.ids.difficulty.value = 'hard'; course.ids.difficulty.handlers.change(); assert.match(course.ids['math-title'].textContent, /24 ÷ 6/);
-  course.ids['math-answer'].value = '4'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 55');
-  course.ids.difficulty.value = 'easy'; course.ids.difficulty.handlers.change();
-  assert.equal(course.ids['math-title'].textContent, '7 + 5 = ?');
-  course.ids['math-answer'].value = '12'; course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 65');
+  course.ids['math-next'].handlers.click(); assert.equal(course.ids['math-title'].textContent, '□');
+  for (const age of ['6-7', '8-9', '10']) for (const subject of ['english', 'math']) for (const difficulty of ['easy','medium','hard']) {
+    course.ids['age-group'].value = age; course.ids.subject.value = subject; course.ids.difficulty.value = difficulty; course.ids.subject.handlers.change();
+    const list = vm.runInContext(subject === 'math' ? 'mathCourses[learning.difficulty]' : 'courses[learning.difficulty]', course.context);
+    assert.ok(list.length >= 12);
+    if (subject === 'math') for (const q of list) {
+      assert.ok(Number.isFinite(q.answer) && q.answer >= 0);
+      assert.equal(vm.runInContext(`matchesMathAnswer(${JSON.stringify(String(q.answer))},${q.answer})`, course.context),true);
+    }
+  }
+  assert.equal(vm.runInContext('matchesMathAnswer("2/4", .5)', course.context),true);
+  for (const bad of ['', '1/0', 'Infinity', '0.5x', '1+1']) assert.equal(vm.runInContext(`matchesMathAnswer(${JSON.stringify(bad)},.5)`,course.context),false);
+  const migrated = setup({ learning: true, courseSaved: JSON.stringify({subject:'math',difficulty:'easy',positions:{'math:easy':4}}) });
+  assert.match(migrated.ids['math-progress'].textContent, /第 5 题/);
+  migrated.ids['age-group'].value = '10'; migrated.ids['age-group'].handlers.change();
+  assert.match(migrated.ids['math-progress'].textContent, /第 1 题/);
+  migrated.ids['age-group'].value = '6-7'; migrated.ids['age-group'].handlers.change();
+  assert.match(migrated.ids['math-progress'].textContent, /第 5 题/);
+  const ageRestored = setup({ learning: true, courseSaved: migrated.courseSaved });
+  assert.equal(ageRestored.ids['age-group'].value, '6-7'); assert.match(ageRestored.ids['math-progress'].textContent, /第 5 题/);
   for (const [growth, phase, unlocked] of [[0, '出生期', 1], [29, '出生期', 1], [30, '幼年期', 2], [89, '幼年期', 2], [90, '成长期', 3], [179, '成长期', 3], [180, '成熟期', 4]]) {
     const petApp = setup({ saved: JSON.stringify({ pet: 'rabbit', points: 20, growth, level: 0 }) });
     assert.match(petApp.ids['pet-stage'].textContent, new RegExp(phase));

@@ -20,7 +20,7 @@
     <section class="shop" aria-label="食物商店"><h3>🍽️ 宠物小食堂</h3><div id="food-options"></div><p id="pet-status" role="status" aria-live="polite">先选择宠物，再开始学习吧。</p></section>
     <section class="learning-controls" aria-label="学习设置">
       <h2>🎨 画画学习乐园</h2>
-      <div class="learning-selects">
+      <div class="learning-selects"><label>年龄 · Age · อายุ<select id="age-group"><option value="6-7">6–7 岁 · Ages 6–7 · อายุ 6–7 ปี</option><option value="8-9">8–9 岁 · Ages 8–9 · อายุ 8–9 ปี</option><option value="10">10 岁 · Age 10 · อายุ 10 ปี</option></select></label>
         <label>学习内容 · Subject · วิชา<select id="subject"><option value="english">英语 · English · ภาษาอังกฤษ</option><option value="math">数学 · Math · คณิตศาสตร์</option></select></label>
         <label>难度 · Difficulty · ระดับ<select id="difficulty"><option value="easy">入门 · Easy · ง่าย</option><option value="medium">进阶 · Medium · ปานกลาง</option><option value="hard">挑战 · Hard · ยาก</option></select></label>
       </div><p id="learning-description"></p><p id="learning-status" role="status" aria-live="polite"></p>
@@ -28,15 +28,15 @@
     <section id="math-practice" class="practice" hidden aria-label="数学学习">
       <p id="math-progress" class="math-progress"></p><h2 id="math-title"></h2><p id="math-prompt"></p><div id="math-visual" class="math-visual"></div>
       <p>在下方画一画，再填写答案。 · Draw, then answer. · วาดแล้วตอบ</p>
-      <form id="math-form"><label for="math-answer">答案 · Answer · คำตอบ</label><input id="math-answer" type="text" inputmode="numeric" autocomplete="off" maxlength="3"><button type="submit" id="math-check">检查 · Check · ตรวจ +10 ⭐</button></form>
+      <form id="math-form"><label for="math-answer">答案 · Answer · คำตอบ</label><input id="math-answer" type="text" inputmode="text" autocomplete="off" maxlength="20"><button type="submit" id="math-check">检查 · Check · ตรวจ +10 ⭐</button></form>
       <p id="math-status" role="status" aria-live="polite"></p><button type="button" id="math-next" hidden>下一题 · Next · ถัดไป →</button>
     </section>
     <section class="lesson" aria-label="当前关卡">
       <div class="apple" id="lesson-icon" aria-hidden="true">🍎</div>
-      <div class="lesson-copy"><p class="eyebrow" id="level-label">第 1 关 · 今天画什么？</p><h2 lang="en-US"><span id="lesson-word">Apple</span> <span id="lesson-translation">苹果</span></h2><p id="lesson-prompt">画一个属于你的大苹果吧！</p></div>
+      <div class="lesson-copy"><p class="eyebrow" id="level-label">第 1 关 · 今天画什么？</p><h2 lang="en-US"><span id="lesson-word">Apple</span> <span id="lesson-translation">苹果</span></h2><p id="english-reading" hidden></p><p id="lesson-prompt">画一个属于你的大苹果吧！</p></div>
       <button class="speak" id="speak" type="button"><span aria-hidden="true">♫</span> 朗读 <small>听听英语</small></button>
     </section>
-    <section class="practice" id="practice" aria-label="跟读与拼写"><h2>听一听，读一读，打出来</h2><label class="speed-label">朗读速度 <select id="speech-rate"><option value="0.45">很慢</option><option value="0.6">慢速</option><option value="1" selected>正常</option></select></label><ol><li id="listen-step">点击“朗读”或“再听一次”，听完后跟读</li><li id="read-step">点击麦克风，说出这个英文单词</li><li id="type-step">用键盘拼出单词</li></ol><button id="repeat" type="button">🔊 再听一次</button> <button id="record" type="button" disabled>🎤 开始跟读</button><p id="recognition-status" role="status" aria-live="polite">先点击上方“朗读”或“再听一次”。下方可以直接输入单词。</p><div class="mic-check"><button id="test-mic" type="button">检查麦克风</button><label for="mic-device">收音设备</label><select id="mic-device"><option value="">系统默认麦克风</option></select><meter id="mic-meter" min="0" max="100" value="0" aria-label="麦克风音量"></meter><p id="mic-status" role="status" aria-live="polite">说话时音量条应跳动。测试只检查收音，不会判定单词正确。</p></div><p class="microphone-note">请通过 <a href="http://127.0.0.1:8765">本地网址</a> 使用跟读，并在浏览器提示中选择“访问该网站时允许”。看到“麦克风已就绪”再读。语音识别可能使用在线服务，请由家长陪同。</p><form id="answer-form"><label for="spelling">我会拼写！</label><input id="spelling" type="text" lang="en-US" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40" placeholder="在这里输入英文单词"><button id="check-answer" type="submit">检查答案 · +10 ⭐</button></form><p id="answer-status" role="status" aria-live="polite"></p><button id="next-level" type="button" hidden>下一关 →</button></section>
+    <section class="practice" id="practice" aria-label="跟读与拼写"><h2>听一听，读一读，打出来</h2><label class="speed-label">朗读速度 <select id="speech-rate"><option value="0.45">很慢</option><option value="0.6">慢速</option><option value="1" selected>正常</option></select></label><ol><li id="listen-step">点击“朗读”或“再听一次”，听完后跟读</li><li id="read-step">点击麦克风，说出这个英文单词</li><li id="type-step">用键盘拼出单词</li></ol><button id="repeat" type="button">🔊 再听一次</button> <button id="record" type="button" disabled>🎤 开始跟读</button><p id="recognition-status" role="status" aria-live="polite">先点击上方“朗读”或“再听一次”。下方可以直接输入单词。</p><div class="mic-check"><button id="test-mic" type="button">检查麦克风</button><label for="mic-device">收音设备</label><select id="mic-device"><option value="">系统默认麦克风</option></select><meter id="mic-meter" min="0" max="100" value="0" aria-label="麦克风音量"></meter><p id="mic-status" role="status" aria-live="polite">说话时音量条应跳动。测试只检查收音，不会判定单词正确。</p></div><p class="microphone-note">请通过 <a href="http://127.0.0.1:8765">本地网址</a> 使用跟读，并在浏览器提示中选择“访问该网站时允许”。看到“麦克风已就绪”再读。语音识别可能使用在线服务，请由家长陪同。</p><form id="answer-form"><label for="spelling">我会拼写！</label><input id="spelling" type="text" lang="en-US" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120" placeholder="在这里输入英文单词"><button id="check-answer" type="submit">检查答案 · +10 ⭐</button></form><p id="answer-status" role="status" aria-live="polite"></p><button id="next-level" type="button" hidden>下一关 →</button></section>
 
     <section class="studio" aria-label="绘画工具和画板">
       <div class="toolbar">
@@ -59,6 +59,7 @@
   <div id="celebration" class="celebration" hidden><div id="confetti" aria-hidden="true"></div><div class="praise" role="status"><span aria-hidden="true">🌟</span><h2>Great job!</h2><p id="praise-message">你画得真棒！</p></div></div>
   <script src="pets.js"></script>
   <script src="app.js"></script>
+  <script src="curriculum.js"></script>
   <script src="learning.js"></script>
 </body>
 </html>
