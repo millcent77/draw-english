@@ -359,7 +359,7 @@ $('record').addEventListener('click', async () => {
 });
 $('answer-form').addEventListener('submit', event => {
   event.preventDefault();
-  if (recording || speaking || rewarded) return;
+  if (recording || speaking || rewarded || (typeof drawingMode === 'function' && drawingMode() !== 'standard')) return;
   if (!account.pet) { $('answer-status').textContent = '先在页面上方选一个宠物伙伴，再领取学习奖励。'; return; }
   if (normalizedWord($('spelling').value) !== normalizedWord(levels[levelIndex].word)) {
     $('answer-status').textContent = '差一点点！检查每个字母，再试一次，不扣分。'; $('type-step').textContent = '检查字母，再拼一次。'; return;

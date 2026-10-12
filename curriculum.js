@@ -53,23 +53,28 @@ const englishBanks = {
 function mathItem(title, answer, prompt) { return { title, answer, prompt, groups: [] }; }
 const solvePrompt = '可以画数轴、拆分或分组，答案只填数字。 · Draw to solve; enter a number. · วาดช่วยคิด แล้วตอบเป็นตัวเลข';
 function sums(limit, count) { return Array.from({length:count},(_,i) => { const a = limit === 20 ? 7+i%9 : 27+i*3, b = limit === 20 ? 1+i%5 : 12+i%18, op = i%2 ? '−' : '+'; return mathItem(`${a} ${op} ${b} = ?`,op === '+' ? a+b : a-b,solvePrompt); }); }
-const mathBanks = {
- '6-7': {
-  easy: Array.from({length:15},(_,i) => i%3 === 0 ? mathItem(`${i+2} 和 ${i+4} · and · และ`,i+4,'哪个数更大？ · Which number is larger? · จำนวนใดมากกว่า') : mathItem(`${i+1}, ${i+2}, ?`,i+3,'继续数数，下一个数是多少？ · What comes next? · จำนวนถัดไปคืออะไร')),
-  medium: sums(20,20),
-  hard: [mathItem('△',3,'三角形有几条边？ · How many sides? · สามเหลี่ยมมีกี่ด้าน'),mathItem('□',4,'正方形有几条边？ · How many sides? · สี่เหลี่ยมจัตุรัสมีกี่ด้าน'),mathItem('⬟',5,'五边形有几条边？ · How many sides? · ห้าเหลี่ยมมีกี่ด้าน'),...sums(20,17)]
- },
- '8-9': {
-  easy: sums(100,20),
-  medium: Array.from({length:20},(_,i) => { const a=2+i%8,b=2+(i*3)%8; return mathItem(i%2 ? `${a*b} ÷ ${a} = ?` : `${a} × ${b} = ?`,i%2 ? b : a*b,solvePrompt); }),
-  hard: Array.from({length:20},(_,i) => i%2 ? mathItem(`${2+i%8}:00 → ${3+i%8}:30`,90,'经过多少分钟？ · How many minutes pass? · ผ่านไปกี่นาที') : mathItem(`${20+i*2} ฿ − ${7+i} ฿ = ?`,13+i,'付钱后剩多少泰铢？ · How many baht remain? · เหลือเงินกี่บาท'))
- },
- '10': {
-  easy: Array.from({length:20},(_,i) => { const a=127+i*23,b=48+i*7; return mathItem(i%2 ? `${a} − ${b} = ?` : `${a} + ${b} = ?`,i%2 ? a-b : a+b,solvePrompt); }),
-  medium: Array.from({length:20},(_,i) => i%2 ? mathItem(`${(10+i)/10} + 0.5 = ?`,(15+i)/10,'小数加法，注意小数点对齐。 · Align decimal points. · จัดจุดทศนิยมให้ตรงกัน') : mathItem(`1/${2+i%4} + 1/${2+i%4} = ?`,2/(2+i%4),'同分母分数相加，可填分数或小数。 · Enter a fraction or decimal. · ตอบเป็นเศษส่วนหรือทศนิยม')),
-  hard: Array.from({length:20},(_,i) => {const a=3+i%8,b=2+i%6;return mathItem(`${a} cm × ${b} cm`,i%2 ? 2*(a+b) : a*b,i%2 ? '画出长方形，求周长（cm）。 · Find the perimeter (cm). · หาความยาวรอบรูป (cm)' : '画出长方形，求面积（cm²）。 · Find the area (cm²). · หาพื้นที่ (cm²)');})
- }
-};
+const mathBanks = {};
+for (const age of ['6-7','8-9','10']) {
+ const scale = age === '10' ? 3 : age === '8-9' ? 2 : 1;
+ mathBanks[age] = {
+  easy: Array.from({length:24},(_,i) => {
+   const a=24+i%12, b=17+i%9;
+   if (i%3 === 0) return mathItem(`${a} + ? = ${a+b}`,b,'填上缺少的数，可以画线段图。 · Find the missing number. · เติมจำนวนที่หายไป');
+   return mathItem(i%2 ? `${a+b} − ${b} = ?` : `${a} + ${b} = ?`,i%2 ? a : a+b,solvePrompt);
+  }),
+  medium: Array.from({length:24},(_,i) => {
+   const a=3+i%7,b=4+i%6,c=5+i%8;
+   return i%3 === 0 ? mathItem(`${a*b+c} ฿ − (${a} × ${b}) ฿ = ?`,c,'先算购买费用，再算找零。 · Find the cost, then the change. · หาราคาก่อน แล้วหาเงินทอน') : i%2 ? mathItem(`(${a*b} ÷ ${a}) + ${c} = ?`,b+c,solvePrompt) : mathItem(`${a} × ${b} + ${c} = ?`,a*b+c,solvePrompt);
+  }),
+  hard: Array.from({length:24},(_,i) => {
+   const a=127*scale+i*13,b=48+i*7;
+   if (i%4 === 0) return mathItem(`${a} + ${b} − 39 = ?`,a+b-39,solvePrompt);
+   if (i%4 === 1) return mathItem('1/2 + 1/4 = ?',.75,'画四等份理解分数，可填分数或小数。 · Use four equal parts. · วาดสี่ส่วนเท่ากัน');
+   if (i%4 === 2) return mathItem(`${((12+i)/10).toFixed(1)} + 0.7 = ?`,(19+i)/10,'对齐小数点再计算。 · Align decimal points. · จัดจุดทศนิยมให้ตรงกัน');
+   const w=4+i%5,h=3+i%4; return mathItem(`${w} cm × ${h} cm`,2*(w+h),'求长方形周长（cm），先画示意图。 · Find the perimeter. · หาความยาวรอบรูป');
+  })
+ };
+}
 const ageDescriptions = {
  '6-7': { english: '字母、单词、词组与简单句 · Letters, words and sentences · อักษร คำศัพท์และประโยค', math: '数与大小、20以内加减、图形 · Numbers, sums to 20 and shapes · จำนวน บวกลบไม่เกิน 20 และรูปทรง' },
  '8-9': { english: '主题词汇、问答与短文 · Vocabulary, questions and reading · คำศัพท์ ถามตอบและอ่าน', math: '100以内加减、乘除、时间与钱币 · Sums to 100, times tables, time and money · บวกลบไม่เกิน 100 คูณหาร เวลาและเงิน' },
@@ -82,3 +87,5 @@ englishBanks['6-7'].easy.forEach((item,i) => { if (i < levels.length) { item.gui
 for (const age of Object.keys(englishBanks)) for (const difficulty of ['easy','medium','hard']) {
  if (age !== '6-7' || difficulty !== 'easy') englishBanks[age][difficulty].forEach(item => { item.translation = `主题 · Topic · หัวข้อ: ${item.translation}`; });
 }
+
+for (const age of Object.keys(ageDescriptions)) ageDescriptions[age].math = '基础：100以内加减与填空；进阶：乘除和两步计算；挑战：综合运算 · Sums, missing numbers, two-step and mixed problems · บวกลบ เติมจำนวน คำนวณสองขั้นและโจทย์ผสม';

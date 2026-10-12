@@ -4,7 +4,7 @@ const vm = require('node:vm');
 function element(extra = {}) {
   return Object.assign({ textContent: '', value: '', hidden: false, children: [], handlers: {}, dataset: {}, style: { setProperty() {} }, classList: { toggle() {}, add() {}, remove() {} }, setAttribute(name, value) { (this.attributes ||= {})[name] = value; }, addEventListener(name, fn) { const previous = this.handlers[name]; this.handlers[name] = previous ? (...args) => { previous(...args); return fn(...args); } : fn; }, appendChild(child) { this.children.push(child); }, replaceChildren(...children) { this.children = children; }, focus() {}, scrollIntoView() {} }, extra);
 }
-function setup({ recognition = true, saved = null, protocol = 'http:', learning = false, courseSaved = null } = {}) {
+function setup({ recognition = true, saved = null, protocol = 'http:', learning = false, courseSaved = null, drawingSaved = null } = {}) {
   const ids = {};
   for (const match of fs.readFileSync('index.html', 'utf8').matchAll(/id="([^"]+)"/g)) ids[match[1]] = element();
   ids['speech-rate'].value = '1';
@@ -12,14 +12,14 @@ function setup({ recognition = true, saved = null, protocol = 'http:', learning 
   Object.assign(ids.canvas, { width: 600, height: 400, getContext: () => ({ clearRect() {} }) });
   const colors = ['#ed4545', '#f4bd24', '#3884ea', '#35a96e'].map(color => element({ dataset: { color }, textContent: 'color' }));
   ids.celebration.hidden = true;
-  let timers = [], stored = saved, spoken = [], session; const courseStore = { 'draw-say-courses-v1': courseSaved };
+  let timers = [], stored = saved, spoken = [], session; const courseStore = { 'draw-say-courses-v1': courseSaved, 'draw-say-drawing-v1': drawingSaved };
   const speech = { getVoices: () => [{ lang: 'en-US' }], addEventListener() {}, cancel() {}, speak(u) { spoken.push(u); queueMicrotask(() => u.onend()); } };
   class Recognition { constructor() { session = this; } start(track) { this.track = track; } stop() {} abort() { this.onerror?.({ error: 'aborted' }); } }
   const context = { document: { getElementById: id => ids[id], querySelector: () => (ids.lesson ||= element()), querySelectorAll: () => colors, createElement: () => element(), createElementNS: () => element(), createTextNode: text => ({ textContent: text }) }, window: { speechSynthesis: speech, SpeechSynthesisUtterance: true, matchMedia: () => ({ matches: true }), location: { protocol } }, localStorage: { getItem: key => key === 'draw-say-pet-v1' ? stored : courseStore[key], setItem: (key, value) => { if (key === 'draw-say-pet-v1') stored = value; else courseStore[key] = value; } }, SpeechSynthesisUtterance: function(text) { this.text = text; }, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { timers = timers.filter(item => item !== t); }, Promise, Math };
   if (recognition) context.window.SpeechRecognition = Recognition;
   vm.createContext(context); vm.runInContext(fs.readFileSync('pets.js', 'utf8'), context); vm.runInContext(fs.readFileSync('app.js', 'utf8'), context);
-  if (learning) { vm.runInContext(fs.readFileSync('curriculum.js', 'utf8'), context); vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context); }
-  return { ids, context, spoken, get session() { return session; }, get saved() { return stored; }, get courseSaved() { return courseStore['draw-say-courses-v1']; }, async flush() { for (let i = 0; i < 100; i++) { await Promise.resolve(); const short = timers.filter(t => t.ms < 12000); timers = timers.filter(t => t.ms >= 12000); short.forEach(t => t.fn()); } }, transcript(text) { const result = [{ transcript: text }]; result.isFinal = true; session.onresult({ resultIndex: 0, results: [result] }); } };
+  if (learning) { vm.runInContext(fs.readFileSync('curriculum.js', 'utf8'), context); vm.runInContext(fs.readFileSync('drawing-tasks.js', 'utf8'), context); vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context); }
+  return { ids, context, spoken, get session() { return session; }, get saved() { return stored; }, get courseSaved() { return courseStore['draw-say-courses-v1']; }, get drawingSaved() { return courseStore['draw-say-drawing-v1']; }, async flush() { for (let i = 0; i < 100; i++) { await Promise.resolve(); const short = timers.filter(t => t.ms < 12000); timers = timers.filter(t => t.ms >= 12000); short.forEach(t => t.fn()); } }, transcript(text) { const result = [{ transcript: text }]; result.isFinal = true; session.onresult({ resultIndex: 0, results: [result] }); } };
 }
 assert.equal((fs.readFileSync('index.html', 'utf8').match(/src="learning.js"/g) || []).length, 1);
 const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() {} });
@@ -74,10 +74,10 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   assert.equal(course.ids.guide.style.opacity, '0');
   course.ids.subject.value = 'math'; course.ids.subject.handlers.change();
   assert.equal(course.ids.practice.hidden, true);
-  course.ids['math-answer'].value = '3'; course.ids['math-form'].handlers.submit({ preventDefault() {} });
+  course.ids['math-answer'].value = '136'; course.ids['math-form'].handlers.submit({ preventDefault() {} });
   assert.equal(course.ids.points.textContent, '⭐ 20');
   course.ids['math-form'].handlers.submit({ preventDefault() {} }); assert.equal(course.ids.points.textContent, '⭐ 20');
-  course.ids['math-next'].handlers.click(); assert.equal(course.ids['math-title'].textContent, '□');
+  course.ids['math-next'].handlers.click(); assert.equal(course.ids['math-title'].textContent, '1/2 + 1/4 = ?');
   for (const age of ['6-7', '8-9', '10']) for (const subject of ['english', 'math']) for (const difficulty of ['easy','medium','hard']) {
     course.ids['age-group'].value = age; course.ids.subject.value = subject; course.ids.difficulty.value = difficulty; course.ids.subject.handlers.change();
     const list = vm.runInContext(subject === 'math' ? 'mathCourses[learning.difficulty]' : 'courses[learning.difficulty]', course.context);
@@ -125,6 +125,46 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
     submit(graded); assert.equal(graded.ids.points.textContent, `⭐ ${reward}`);
     submit(graded); assert.equal(graded.ids.points.textContent, `⭐ ${reward}`);
   }
+  const drawing = setup({ learning: true }); drawing.ids['pet-options'].children[0].handlers.click();
+  drawing.ids.subject.value = 'math'; drawing.ids.subject.handlers.change();
+  assert.match(drawing.ids.difficulty.children[0].textContent,/Foundation/);
+  drawing.ids['practice-mode'].value = 'fractions'; drawing.ids['practice-mode'].handlers.change();
+  const checkDrawing = () => drawing.ids['drawing-form'].handlers.submit({ preventDefault() {} });
+  drawing.ids['drawing-answer'].value = '1/4'; checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 0');
+  drawing.ids['drawing-board'].children[0].handlers.click(); drawing.ids['drawing-board'].children[1].handlers.click(); checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 0');
+  drawing.ids['drawing-board'].children[1].handlers.click(); checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 10');
+  checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 10');
+  drawing.ids['drawing-next'].handlers.click(); assert.equal(drawing.ids['drawing-title'].textContent,'2/6');
+  drawing.ids['practice-mode'].value='geometry'; drawing.ids['practice-mode'].handlers.change();
+  drawing.ids['drawing-answer'].value='6';
+  for (const index of [0,1,2,16,17,18]) drawing.ids['drawing-board'].children[index].handlers.click();
+  checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 10');
+  drawing.ids['drawing-clear'].handlers.click();
+  for (const index of [0,1,2,8,9,10]) drawing.ids['drawing-board'].children[index].handlers.click();
+  drawing.ids['drawing-answer'].value='7'; checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 10');
+  drawing.ids['drawing-answer'].value='6'; checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 20');
+  drawing.ids['drawing-next'].handlers.click();
+  assert.equal(vm.runInContext('drawingQuestion.answer',drawing.context),14); // 4x3 perimeter
+  drawing.ids.subject.value='english'; drawing.ids.subject.handlers.change();
+  drawing.ids['practice-mode'].value='listening'; drawing.ids['practice-mode'].handlers.change();
+  checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 20');
+  await drawing.ids['drawing-listen'].handlers.click();
+  drawing.ids['drawing-board'].children[0].handlers.click(); drawing.ids['drawing-board'].children[1].handlers.click(); checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 20');
+  drawing.ids['drawing-clear'].handlers.click(); drawing.ids['drawing-color'].value='blue';
+  drawing.ids['drawing-board'].children[11].handlers.click(); drawing.ids['drawing-board'].children[12].handlers.click(); checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 20');
+  drawing.ids['drawing-clear'].handlers.click(); drawing.ids['drawing-color'].value='red'; drawing.ids['drawing-shape'].value='square';
+  drawing.ids['drawing-board'].children[11].handlers.click(); drawing.ids['drawing-board'].children[12].handlers.click(); checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 20');
+  drawing.ids['drawing-clear'].handlers.click(); drawing.ids['drawing-shape'].value='circle';
+  drawing.ids['drawing-board'].children[11].handlers.click(); drawing.ids['drawing-board'].children[12].handlers.click(); checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 30');
+  checkDrawing(); assert.equal(drawing.ids.points.textContent,'⭐ 30');
+  drawing.ids['practice-mode'].value='standard'; drawing.ids['practice-mode'].handlers.change();
+  assert.equal(drawing.ids['free-canvas'].hidden,false); assert.equal(drawing.ids.practice.hidden,false);
+  const drawRestored = setup({ learning:true, courseSaved:drawing.courseSaved, drawingSaved:drawing.drawingSaved, saved:drawing.saved });
+  drawRestored.ids.subject.value='math'; drawRestored.ids.subject.handlers.change();
+  drawRestored.ids['practice-mode'].value='fractions'; drawRestored.ids['practice-mode'].handlers.change();
+  assert.equal(drawRestored.ids['drawing-title'].textContent,'2/6');
+  assert.equal(drawRestored.ids.points.textContent,'⭐ 30');
+  console.log('PASS: harder math, fraction painting, rectangle geometry, listening color/position and reward gates.');
   console.log('PASS: touch feedback without rewards and graded English/math rewards.');
   console.log('PASS: pet stage boundaries, action unlocks, feeding evolution and restored saves.');
   console.log('PASS: courses, math validation and single rewards.');

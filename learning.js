@@ -41,6 +41,9 @@ function renderMath() {
 }
 function renderCourse() {
   courses = englishBanks[learning.age]; mathCourses = mathBanks[learning.age];
+  const difficultySelect = $('difficulty'); difficultySelect.replaceChildren();
+  const labels = learning.subject === 'math' ? ['基础 · Foundation · พื้นฐาน','进阶 · Intermediate · ขั้นกลาง','挑战 · Challenge · ท้าทาย'] : ['入门 · Easy · ง่าย','进阶 · Medium · ปานกลาง','挑战 · Hard · ยาก'];
+  ['easy','medium','hard'].forEach((id,index) => {const option=document.createElement('option');option.value=id;option.textContent=labels[index];difficultySelect.appendChild(option);});
   lessonReward = difficultyRewards[learning.difficulty];
   $('check-answer').textContent = `检查答案 · Check · ตรวจ +${lessonReward} ⭐`;
   $('math-check').textContent = `检查 · Check · ตรวจ +${lessonReward} ⭐`;
@@ -54,6 +57,7 @@ function renderCourse() {
     resetEnglishPractice(); renderLevel(); $('guide').style.opacity = learning.difficulty === 'hard' ? '0' : learning.difficulty === 'medium' ? '.12' : '.23';
     renderEnglishTask();
   }
+  renderDrawingMode();
 }
 function changeCourse() {
   if (speaking || recording || testingMic || !$('celebration').hidden) {
@@ -67,7 +71,7 @@ function changeCourse() {
 $('age-group').addEventListener('change', changeCourse); $('subject').addEventListener('change', changeCourse); $('difficulty').addEventListener('change', changeCourse);
 $('next-level').addEventListener('click', () => { learning.positions[courseKey()] = levelIndex; saveLearning(); renderEnglishTask(); });
 $('math-form').addEventListener('submit', event => {
-  event.preventDefault(); if (mathRewarded || learning.subject !== 'math') return;
+  event.preventDefault(); if (mathRewarded || learning.subject !== 'math' || drawingMode() !== 'standard') return;
   if (!account.pet) { $('math-status').textContent = '先选择宠物 · Choose a pet first · เลือกสัตว์เลี้ยงก่อน'; return; }
   const answer = $('math-answer').value.trim(), question = mathCourses[learning.difficulty][learning.positions[courseKey()] || 0];
   if (!matchesMathAnswer(answer, question.answer)) { $('math-status').textContent = '再算一次，不扣分！ · Try again! · ลองคำนวณอีกครั้ง'; return; }

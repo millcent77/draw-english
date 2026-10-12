@@ -23,7 +23,7 @@
       <div class="learning-selects"><label>年龄 · Age · อายุ<select id="age-group"><option value="6-7">6–7 岁 · Ages 6–7 · อายุ 6–7 ปี</option><option value="8-9">8–9 岁 · Ages 8–9 · อายุ 8–9 ปี</option><option value="10">10 岁 · Age 10 · อายุ 10 ปี</option></select></label>
         <label>学习内容 · Subject · วิชา<select id="subject"><option value="english">英语 · English · ภาษาอังกฤษ</option><option value="math">数学 · Math · คณิตศาสตร์</option></select></label>
         <label>难度 · Difficulty · ระดับ<select id="difficulty"><option value="easy">入门 · Easy · ง่าย</option><option value="medium">进阶 · Medium · ปานกลาง</option><option value="hard">挑战 · Hard · ยาก</option></select></label>
-      </div><p id="learning-description"></p><p id="learning-status" role="status" aria-live="polite"></p>
+      <label>练习方式 · Practice · แบบฝึก<select id="practice-mode"><option value="standard">常规练习 · Standard · แบบปกติ</option></select></label></div><p id="learning-description"></p><p id="learning-status" role="status" aria-live="polite"></p>
     </section>
     <section id="math-practice" class="practice" hidden aria-label="数学学习">
       <p id="math-progress" class="math-progress"></p><h2 id="math-title"></h2><p id="math-prompt"></p><div id="math-visual" class="math-visual"></div>
@@ -39,7 +39,15 @@
     <section class="practice" id="practice" aria-label="跟读与拼写"><h2>听一听，读一读，打出来</h2><label class="speed-label">朗读速度 <select id="speech-rate"><option value="0.45">很慢</option><option value="0.6">慢速</option><option value="1" selected>正常</option></select></label><ol><li id="listen-step">点击“朗读”或“再听一次”，听完后跟读</li><li id="read-step">点击麦克风，说出这个英文单词</li><li id="type-step">用键盘拼出单词</li></ol><button id="repeat" type="button">🔊 再听一次</button> <button id="record" type="button" disabled>🎤 开始跟读</button><p id="recognition-status" role="status" aria-live="polite">先点击上方“朗读”或“再听一次”。下方可以直接输入单词。</p><div class="mic-check"><button id="test-mic" type="button">检查麦克风</button><label for="mic-device">收音设备</label><select id="mic-device"><option value="">系统默认麦克风</option></select><meter id="mic-meter" min="0" max="100" value="0" aria-label="麦克风音量"></meter><p id="mic-status" role="status" aria-live="polite">说话时音量条应跳动。测试只检查收音，不会判定单词正确。</p></div><p class="microphone-note">请通过 <a href="http://127.0.0.1:8765">本地网址</a> 使用跟读，并在浏览器提示中选择“访问该网站时允许”。看到“麦克风已就绪”再读。语音识别可能使用在线服务，请由家长陪同。</p><form id="answer-form"><label for="spelling">我会拼写！</label><input id="spelling" type="text" lang="en-US" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120" placeholder="在这里输入英文单词"><button id="check-answer" type="submit">检查答案 · +10 ⭐</button></form><p id="answer-status" role="status" aria-live="polite"></p><button id="next-level" type="button" hidden>下一关 →</button></section>
 
     <section class="studio" aria-label="绘画工具和画板">
-      <div class="toolbar">
+      <section id="drawing-task" hidden aria-label="绘画任务">
+        <p id="drawing-progress"></p><h2 id="drawing-title"></h2><p id="drawing-prompt"></p>
+        <button type="button" id="drawing-listen">听指令 · Listen · ฟังคำสั่ง</button>
+        <div id="drawing-tools"><label>颜色 · Color · สี<select id="drawing-color"><option value="red">红 · Red · แดง</option><option value="blue">蓝 · Blue · น้ำเงิน</option><option value="green">绿 · Green · เขียว</option></select></label><label>形状 · Shape · รูปทรง<select id="drawing-shape"><option value="circle">圆 · Circle · วงกลม</option><option value="square">方 · Square · สี่เหลี่ยม</option><option value="triangle">三角 · Triangle · สามเหลี่ยม</option><option value="erase">擦除 · Erase · ลบ</option></select></label></div>
+        <div id="drawing-board"></div><button id="drawing-clear" type="button">重画 · Clear · วาดใหม่</button>
+        <form id="drawing-form"><label id="drawing-answer-label" for="drawing-answer">计算答案 · Answer · คำตอบ</label><input id="drawing-answer" type="text" inputmode="text" autocomplete="off" maxlength="20"><button type="submit" id="drawing-check"></button></form>
+        <p id="drawing-status" role="status" aria-live="polite"></p><button id="drawing-next" hidden type="button">下一题 · Next · ถัดไป →</button>
+      </section>
+      <div class="toolbar" id="free-toolbar">
         <div class="colors" role="group" aria-label="选择画笔颜色">
           <button class="color selected" data-color="#ed4545" style="--color:#ed4545" aria-label="红色画笔" aria-pressed="true" type="button"><span class="swatch"></span><span>红色</span></button>
           <button class="color" data-color="#f4bd24" style="--color:#f4bd24" aria-label="黄色画笔" aria-pressed="false" type="button"><span class="swatch"></span><span>黄色</span></button>
@@ -49,9 +57,9 @@
         <button id="eraser" class="tool eraser" aria-pressed="false" type="button"><span aria-hidden="true">▱</span> 橡皮擦</button>
         <button id="clear" class="tool clear" type="button"><span aria-hidden="true">↻</span> 清空画板</button>
       </div>
-      <div class="canvas-wrap"><svg id="guide" viewBox="0 0 600 400" aria-hidden="true"></svg><canvas id="canvas" width="600" height="400" aria-label="600 乘 400 绘画画板，使用鼠标或触摸自由绘画">你的浏览器不支持画布，请使用现代浏览器。</canvas></div>
-      <div class="level-actions"><span id="color-hint"><i></i> 试试这个颜色，也可以自由发挥！</span><button id="done" type="button">Done ✓ <small>我画好啦！</small></button></div>
-      <div class="board-footer"><span><i id="tool-dot"></i><span id="tool-status">红色画笔已准备好</span></span><span>大胆画，每一笔都很棒！<span aria-hidden="true"> ✨</span></span></div>
+      <div class="canvas-wrap" id="free-canvas"><svg id="guide" viewBox="0 0 600 400" aria-hidden="true"></svg><canvas id="canvas" width="600" height="400" aria-label="600 乘 400 绘画画板，使用鼠标或触摸自由绘画">你的浏览器不支持画布，请使用现代浏览器。</canvas></div>
+      <div class="level-actions" id="free-actions"><span id="color-hint"><i></i> 试试这个颜色，也可以自由发挥！</span><button id="done" type="button">Done ✓ <small>我画好啦！</small></button></div>
+      <div class="board-footer" id="free-footer"><span><i id="tool-dot"></i><span id="tool-status">红色画笔已准备好</span></span><span>大胆画，每一笔都很棒！<span aria-hidden="true"> ✨</span></span></div>
     </section>
     <p id="speech-status" class="speech-status" role="status" aria-live="polite">拿起画笔，开始你的创作吧。</p>
     <footer>小小画笔，大大想象 <span aria-hidden="true">♥</span></footer>
@@ -60,6 +68,7 @@
   <script src="pets.js"></script>
   <script src="app.js"></script>
   <script src="curriculum.js"></script>
+  <script src="drawing-tasks.js"></script>
   <script src="learning.js"></script>
 </body>
 </html>
