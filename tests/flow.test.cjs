@@ -97,13 +97,13 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   assert.match(migrated.ids['math-progress'].textContent, /第 5 题/);
   const ageRestored = setup({ learning: true, courseSaved: migrated.courseSaved });
   assert.equal(ageRestored.ids['age-group'].value, '6-7'); assert.match(ageRestored.ids['math-progress'].textContent, /第 5 题/);
-  for (const [growth, phase, unlocked] of [[0, '出生期', 1], [29, '出生期', 1], [30, '幼年期', 2], [89, '幼年期', 2], [90, '成长期', 3], [179, '成长期', 3], [180, '成熟期', 4]]) {
+  for (const [growth, phase, unlocked] of [[0, '出生期', 1], [29, '出生期', 1], [30, '幼年期', 2], [89, '幼年期', 2], [90, '探索期', 3], [179, '探索期', 3], [180, '青年期', 4], [270, '成熟期', 5], [420, '达人期', 6], [570, '守护期', 7], [870, '传奇期', 8]]) {
     const petApp = setup({ saved: JSON.stringify({ pet: 'rabbit', points: 20, growth, level: 0 }) });
     assert.match(petApp.ids['pet-stage'].textContent, new RegExp(phase));
     assert.equal(petApp.ids['pet-actions'].children.filter(button => !button.disabled).length, unlocked);
     assert.equal(petApp.ids['pet-avatar'].dataset.pet, 'rabbit');
     petApp.ids['pet-actions'].children[3].handlers.click();
-    assert.equal(petApp.ids['pet-avatar'].attributes['data-motion'], unlocked === 4 ? 'dance' : undefined);
+    assert.equal(petApp.ids['pet-avatar'].attributes['data-motion'], unlocked >= 4 ? 'dance' : undefined);
   }
   const evolving = setup({ saved: JSON.stringify({ pet: 'dog', points: 10, growth: 25, level: 0 }) });
   evolving.ids['food-options'].children[0].handlers.click();
@@ -203,13 +203,27 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   assert.match(translated.ids['english-translation-details'].children[2].textContent,/แอปเปิล/);
   translated.ids.difficulty.value='hard'; translated.ids.difficulty.handlers.change();
   assert.equal(translated.ids['english-answer-translation'].hidden,true);
-  assert.match(translated.ids['english-translation-details'].children[1].textContent,/午餐/);
+  assert.match(translated.ids['passage-translation-body'].children[1].textContent,/午餐/);
   translated.ids.spelling.value='An apple'; submit(translated); assert.equal(translated.ids['english-answer-translation'].hidden,true);
   translated.ids.repeat.handlers.click(); await translated.flush(); translated.ids.record.handlers.click(); translated.transcript('An apple'); submit(translated);
   assert.equal(translated.ids['english-answer-translation'].hidden,false);
   await translated.flush(); translated.ids['next-level'].handlers.click();
   assert.equal(translated.ids['english-answer-translation'].hidden,true);
-  assert.match(translated.ids['english-translation-details'].children[1].textContent,/小猫/);
+  assert.match(translated.ids['passage-translation-body'].children[1].textContent,/小猫/);
+  const switching=setup({saved:JSON.stringify({pet:'cat',points:55,growth:450,level:2})});
+  switching.ids['change-pet'].handlers.click(); assert.equal(switching.ids['pet-picker'].hidden,false);
+  switching.ids['cancel-pet-change'].handlers.click(); assert.equal(switching.ids['pet-picker'].hidden,true); assert.equal(JSON.parse(switching.saved || '{}').pet,'cat');
+  switching.ids['change-pet'].handlers.click(); switching.ids['pet-options'].children[1].handlers.click();
+  assert.equal(switching.ids['pet-avatar'].dataset.pet,'dog'); assert.equal(switching.ids['pet-picker'].hidden,true);
+  const switched=JSON.parse(switching.saved);assert.equal(switched.points,55);assert.equal(switched.growth,450);assert.equal(switched.level,2);
+  assert.match(switching.ids['pet-stage'].textContent,/达人期/);
+  switching.ids['change-pet'].handlers.click(); assert.equal(switching.ids['pet-picker-backdrop'].hidden,false);
+  switching.ids['pet-picker'].handlers.keydown({key:'Escape',preventDefault(){}});assert.equal(switching.ids['pet-picker'].hidden,true);
+  for (const pet of ['cat','dog','rabbit','panda']) {
+    const png=fs.readFileSync(`assets/pet-${pet}.png`); assert.equal(png.subarray(1,4).toString(),'PNG');
+    assert.equal(png.readUInt32BE(16),png.readUInt32BE(20)*2); assert.ok(png.readUInt32BE(16)>=1024);
+  }
+  console.log('PASS: adoption switch/cancel preserves points, growth and course position.');
   console.log('PASS: complete Chinese/Thai coverage and answer translation visibility/reset.');
   console.log('PASS: six distinct stage banks, stage storage, decimals/percentages, scaled geometry and directions.');
   console.log('PASS: harder math, fraction painting, rectangle geometry, listening color/position and reward gates.');

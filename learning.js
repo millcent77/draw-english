@@ -90,11 +90,13 @@ renderCourse();
 
 function renderEnglishTask() {
   const item = levels[levelIndex];
-  $('lesson-prompt').textContent = `Stage ${learning.stage} · ${item.topic} · ${item.task}`;
+  $('lesson-prompt').textContent = item.reading ? item.task.split(' · ')[0] : item.task;
   $('english-reading').hidden = !item.reading;
   $('english-reading').textContent = item.reading || '';
   const translated=item.translations || {};
-  renderTranslationLines($('english-translation-details'), item.reading ? [['短文 · Passage · บทอ่าน', translated.reading],['问题 · Question · คำถาม', translated.question]] : [['意思 · Meaning · ความหมาย',translated.model]]);
+  $('passage-translation').hidden=!item.reading;
+  renderTranslationLines($('passage-translation-body'), item.reading ? [['短文 · Passage · บทอ่าน',translated.reading]] : []);
+  renderTranslationLines($('english-translation-details'), item.reading ? [['问题 · Question · คำถาม', translated.question]] : [['意思 · Meaning · ความหมาย',translated.model]]);
   $('english-answer-translation').hidden=true; $('english-answer-translation').replaceChildren();
   // Hide the model while reading/grammar questions are being answered.
   if (item.reading) {

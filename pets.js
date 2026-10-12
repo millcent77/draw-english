@@ -1,15 +1,23 @@
 'use strict';
 const petStages = [
-  { min: 1, name: '出生期 · Newborn · แรกเกิด', size: '.65' },
-  { min: 2, name: '幼年期 · Young · วัยเด็ก', size: '.8' },
-  { min: 4, name: '成长期 · Growing · กำลังโต', size: '.94' },
-  { min: 7, name: '成熟期 · Mature · โตเต็มวัย', size: '1.08' }
+  { min:1,name:'出生期 · Newborn · แรกเกิด',size:'.7' },
+  { min:2,name:'幼年期 · Baby · วัยเด็ก',size:'.76' },
+  { min:4,name:'探索期 · Explorer · นักสำรวจ',size:'.82' },
+  { min:7,name:'青年期 · Young · วัยรุ่น',size:'.88' },
+  { min:10,name:'成熟期 · Mature · โตเต็มวัย',size:'.94' },
+  { min:15,name:'达人期 · Expert · ผู้ชำนาญ',size:'1' },
+  { min:20,name:'守护期 · Guardian · ผู้พิทักษ์',size:'1.04' },
+  { min:30,name:'传奇期 · Legend · ตำนาน',size:'1.08' }
 ];
 const petMoves = [
-  { id: 'blink', level: 1, name: '眨眼 · Blink · กะพริบตา' },
-  { id: 'wave', level: 2, name: '招手 · Wave · โบกมือ' },
+  { id: 'blink', level: 1, name: '点头 · Nod · พยักหน้า' },
+  { id: 'wave', level: 2, name: '摇摆 · Sway · โยกตัว' },
   { id: 'jump', level: 4, name: '跳跃 · Jump · กระโดด' },
-  { id: 'dance', level: 7, name: '跳舞 · Dance · เต้น' }
+  { id: 'dance', level: 7, name: '跳舞 · Dance · เต้น' },
+  { id:'stretch',level:10,name:'伸懒腰 · Stretch · ยืดตัว' },
+  { id:'spin',level:15,name:'转圈 · Spin · หมุนตัว' },
+  { id:'glow',level:20,name:'星光 · Sparkle · ประกายดาว' },
+  { id:'cheer',level:30,name:'欢呼 · Cheer · ดีใจ' }
 ];
 let petMotionTimer = null;
 let petTouchCount = 0;
@@ -39,10 +47,13 @@ function renderPetCharacter(pet) {
       }
       character.appendChild(node);
     }
+    const sprite=document.createElement('span');sprite.className='pet-sprite';sprite.setAttribute('aria-hidden','true');character.appendChild(sprite);
     const heart = document.createElement('span'); heart.className = 'pet-affection'; heart.textContent = '♥'; character.appendChild(heart);
     avatar.appendChild(character);
   }
+  const phaseIndex=petStages.indexOf(phase);
   avatar.style.setProperty('--pet-size', phase.size);
+  avatar.style.setProperty('--pet-position',`${phaseIndex%4*100/3}% ${Math.floor(phaseIndex/4)*100}%`);
   avatar.setAttribute('data-stage', String(phase.min));
   document.getElementById('pet-stage').textContent = phase.name;
   const next = petStages.find(item => item.min > level);
@@ -50,7 +61,9 @@ function renderPetCharacter(pet) {
   const actions = document.getElementById('pet-actions'); actions.replaceChildren();
   petMoves.forEach(move => {
     const button = document.createElement('button'); button.type = 'button'; button.disabled = level < move.level;
-    button.textContent = `${move.name}${button.disabled ? ` 🔒 Lv.${move.level}` : ''}`;
+    const fullName=`${move.name}${button.disabled ? ` 🔒 Lv.${move.level}` : ''}`;
+    const icons={blink:'☺',wave:'↔',jump:'↑',dance:'♫',stretch:'☀',spin:'↻',glow:'✦',cheer:'★'};
+    button.textContent=`${icons[move.id]} ${move.name.split(' · ')[0]}${button.disabled ? ` 🔒${move.level}` : ''}`;button.title=fullName;button.setAttribute('aria-label',fullName);
     button.addEventListener('click', () => playPetMove(move.id)); actions.appendChild(button);
   });
 }

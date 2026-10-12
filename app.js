@@ -16,6 +16,7 @@ const foods = [{ name: '小饼干', icon: '🍪', cost: 5, growth: 5 }, { name: 
 let lessonReward = 10;
 const difficultyRewards = { easy: 10, medium: 15, hard: 20 };
 const storageKey = 'draw-say-pet-v1';
+let choosingPet = false;
 let account = { pet: null, points: 0, growth: 0, level: 0 };
 try {
   const saved = JSON.parse(localStorage.getItem(storageKey));
@@ -29,24 +30,40 @@ function renderPet() {
   const pet = pets.find(item => item.id === account.pet);
   renderPetCharacter(pet);
   $('pet-name').textContent = pet ? pet.name : '选一个学习小伙伴';
+  if (pet && $('pet-status').textContent === '先选择宠物，再开始学习吧。') $('pet-status').textContent = '学习赚星星，喂食陪伙伴成长。';
   $('pet-growth').textContent = `成长等级 ${Math.floor(account.growth / 30) + 1} · 距离升级还差 ${30 - account.growth % 30} 成长值`;
   $('pet-progress').value = account.growth % 30;
   $('points').textContent = `⭐ ${account.points}`;
-  $('pet-picker').hidden = Boolean(pet);
+  $('pet-picker').hidden = Boolean(pet) && !choosingPet;
+  $('pet-picker-backdrop').hidden=$('pet-picker').hidden;
+  $('cancel-pet-change').hidden = !pet;
+  $('change-pet').hidden = !pet;
   $('done').disabled = !pet || completing;
   [...$('food-options').children].forEach((button, index) => { button.disabled = !pet || account.points < foods[index].cost; });
 }
 pets.forEach(pet => {
   const button = document.createElement('button');
   button.type = 'button';
-  const icon = document.createElement('span'); icon.textContent = pet.icon; icon.setAttribute('aria-hidden', 'true');
+  const icon = document.createElement('span'); icon.className='pet-choice-image';icon.dataset.pet=pet.id;icon.textContent = ''; icon.setAttribute('aria-hidden', 'true');
   button.appendChild(icon); button.appendChild(document.createTextNode(pet.name));
-  button.addEventListener('click', () => { account.pet = pet.id; saveAccount(); renderPet(); $('pet-status').textContent = `${pet.name}成为你的学习伙伴啦！`; });
+  button.addEventListener('click', () => { account.pet = pet.id; choosingPet=false; saveAccount(); renderPet(); $('pet-status').textContent = `${pet.name}成为你的学习伙伴啦！`; });
   $('pet-options').appendChild(button);
+});
+$('change-pet').addEventListener('click',()=>{choosingPet=true;renderPet();$('pet-options').children[0].focus();});
+function cancelPetChange(){if(!account.pet)return;choosingPet=false;renderPet();$('change-pet').focus();}
+$('cancel-pet-change').addEventListener('click',cancelPetChange);
+$('pet-picker-backdrop').addEventListener('click',cancelPetChange);
+$('pet-picker').addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();cancelPetChange();return;}
+  if(event.key!=='Tab')return;
+  const buttons=[...$('pet-options').children,...($('cancel-pet-change').hidden?[]:[$('cancel-pet-change')])];
+  if(event.shiftKey && event.target===buttons[0]){event.preventDefault();buttons[buttons.length-1].focus();}
+  else if(!event.shiftKey && event.target===buttons[buttons.length-1]){event.preventDefault();buttons[0].focus();}
 });
 foods.forEach(food => {
   const button = document.createElement('button'); button.type = 'button';
-  button.textContent = `${food.icon} ${food.name} · ${food.cost} ⭐ · 成长 +${food.growth}`;
+  button.textContent = `${food.icon} ${food.name}\n${food.cost} ⭐ · +${food.growth}`;
+  button.title=`${food.name} · ${food.cost} ⭐ · 成长 +${food.growth}`;
   button.addEventListener('click', () => {
     if (!account.pet || account.points < food.cost) return;
     account.points -= food.cost; account.growth += food.growth;

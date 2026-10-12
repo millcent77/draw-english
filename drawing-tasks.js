@@ -43,7 +43,7 @@ function makeDrawingQuestion(mode,index,difficulty,stage='2') {
  const zhShape={circle:'圆形',square:'正方形',triangle:'三角形'}[shape],thShape={circle:'วงกลม',square:'สี่เหลี่ยมจัตุรัส',triangle:'สามเหลี่ยม'}[shape];
  const zhRegion={above:'上方',below:'下方',left:'左侧',right:'右侧'}[region],thRegion={above:'ด้านบน',below:'ด้านล่าง',left:'ด้านซ้าย',right:'ด้านขวา'}[region];
  const translations={zh:`${level>=5 ? '选择正确的颜色和形状后，' : level>=3 ? '仔细听，并' : ''}在${level>=5 ? '中间那棵树' : '树'}的${zhRegion}画 ${number} 个${zhColor}${zhShape}${level>=5 ? '，不要添加其他图形' : ''}。`,th:`${level>=5 ? 'หลังเลือกสีและรูปทรงที่ถูกต้อง ' : level>=3 ? 'ฟังให้ดีแล้ว' : ''}วาด${thShape}${thColor} ${number} รูป ที่${thRegion}ของต้นไม้${level>=5 ? 'ตรงกลาง' : ''}${level>=5 ? ' โดยไม่เพิ่มรูปอื่น' : ''}`};
- return {mode,color,shape,number,region,translations,count:20,title:`${prefix} ${number} ${color} ${shape}s ${region} ${level>=5 ? 'the middle tree without adding other shapes' : 'the tree'}.`,
+ return {mode,color,shape,number,region,translations,count:20,title:`${prefix} ${number} ${color} ${shape}s ${['left','right'].includes(region) ? `to the ${region} of` : region} ${level>=5 ? 'the middle tree without adding other shapes' : 'the tree'}.`,
   prompt:'听完英语指令，按数量、颜色、形状和方位绘图。 · Listen and draw by number, colour, shape and position. · ฟังแล้ววาดตามจำนวน สี รูปทรงและตำแหน่ง'};
 }
 function renderDrawingMode() {
@@ -62,9 +62,11 @@ function renderDrawingQuestion() {
  const index=drawingState.positions[drawingKey()] || 0;
  drawingQuestion=makeDrawingQuestion(drawingMode(),index,learning.difficulty,learning.stage);
  drawingCells=Array(drawingQuestion.count).fill(null); drawingRewarded=false; drawingHeard=false;
+ status.textContent='按任务画出作品，再检查。 · Draw, then check. · วาดแล้วตรวจ';
  $('drawing-progress').textContent=`Stage ${learning.stage} · 第 ${index+1} 题，共 12 题 · Question ${index+1} of 12 · ข้อ ${index+1} จาก 12`;
  $('drawing-title').textContent=drawingQuestion.title; $('drawing-prompt').textContent=drawingQuestion.prompt;
  const listening=drawingQuestion.mode === 'listening';
+ $('drawing-instructions').open=!listening;
  renderTranslationLines($('drawing-translations'), listening ? [['指令 · Instruction · คำสั่ง',drawingQuestion.translations]] : []);
  $('drawing-listen').hidden=!listening; $('drawing-tools').hidden=!listening;
  $('drawing-answer').hidden=listening; $('drawing-answer-label').hidden=listening;
