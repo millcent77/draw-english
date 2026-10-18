@@ -13,3 +13,13 @@ Files were downloaded from these official educational download links without aud
 The former short Wikimedia Ogg demonstration recordings were removed. A YouTube-player approach was tested but could not load on the target computer, so the shipped implementation uses these local teaching-song files. It never substitutes spoken speech for a failed song. Approximate line cues are learning hints, not verified karaoke alignment. The third selection is now The Alphabet Song rather than the old Row tune sample.
 
 Source and file checks: 2026-10-18.
+
+## Optional inline YouTube performances
+
+The app can optionally embed the official videos below in its own page using a visible YouTube player. It does not download, extract, or redistribute these videos or their audio. Publisher copyrights remain with the publishers. The recordings above remain the default local audio option.
+
+- Twinkle: Super Simple Songs — https://www.youtube.com/watch?v=yCjJyiqpAuU
+- Mary: Mother Goose Club — https://www.youtube.com/watch?v=N7Z2Un0oxow
+- Alphabet: Super Simple Songs — https://www.youtube.com/watch?v=vD98OvvDNEs
+
+Video versions differ from the local teaching recordings; local lyric time cues are not applied to the video.

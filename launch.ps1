@@ -13,7 +13,7 @@ try {
             $learningBody = $learningClient.GetStringAsync("$learningUrl/app.js").GetAwaiter().GetResult()
             $learningSongs = $learningClient.GetStringAsync("$learningUrl/songs-player.js").GetAwaiter().GetResult()
             $learningAudio = $learningClient.GetAsync("$learningUrl/assets/songs/twinkle.mp3", [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
-            try { return $learningBody.Contains('draw-say-pet-v1') -and $learningSongs.Contains('LOCAL_SINGING_PLAYER_V3') -and $learningAudio.IsSuccessStatusCode -and $learningAudio.Content.Headers.ContentType.MediaType -eq 'audio/mpeg' }
+            try { return $learningBody.Contains('draw-say-pet-v1') -and $learningSongs.Contains('INLINE_SINGING_PLAYER_V4') -and $learningAudio.IsSuccessStatusCode -and $learningAudio.Content.Headers.ContentType.MediaType -eq 'audio/mpeg' }
             finally { $learningAudio.Dispose() }
         } catch { return $false }
     }

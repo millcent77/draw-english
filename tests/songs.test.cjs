@@ -34,15 +34,24 @@ for (const song of songs) {
 (async () => {
   ids['show-songs'].handlers.click(); assert.equal(study.hidden, true); assert.equal(ids['songs-panel'].hidden, false);
   await ids['song-play'].handlers.click(); assert.equal(audio.paused, false);
+  ids['song-use-video'].handlers.click(); assert.equal(audio.paused, true); assert.equal(ids['song-video-panel'].hidden, false);
+  assert.equal(ids['song-player'].dataset.playback, 'video'); assert.equal(ids['song-video-frame'].children.length, 1);
+  assert.equal(ids['song-video-frame'].children[0].src, 'https://www.youtube.com/embed/yCjJyiqpAuU?playsinline=1&rel=0');
+  ids['song-use-audio'].handlers.click(); assert.equal(ids['song-video-frame'].children.length, 0); assert.equal(audio.hidden, false);
+  await ids['song-original'].handlers.click(); assert.equal(audio.paused, false);
+  assert.match(fs.readFileSync('index.html','utf8'), /<button id="song-original"[^>]*type="button"/);
   audio.currentTime = songs[0].lines[2][0]; audio.handlers.timeupdate(); assert.equal(ids['song-lyrics'].children[2].attributes['aria-current'], 'true');
   await ids['song-lyrics'].children[3].handlers.click(); assert.equal(audio.currentTime, songs[0].lines[3][0]);
   ids['song-speed'].value = '0.75'; ids['song-speed'].handlers.change(); assert.equal(audio.playbackRate, 0.75);
   ids['song-loop'].handlers.change(); assert.equal(audio.loop, true);
   ids['song-translation'].checked = false; ids['song-translation'].handlers.change(); assert.equal(ids['song-lyrics'].classList.contains('hide-translation'), true);
   ids['song-list'].children[1].handlers.click(); assert.equal(audio.paused, true); assert.match(audio.src, /mary/); assert.equal(ids['song-lyrics'].children.length, songs[1].lines.length);
+  ids['song-use-video'].handlers.click(); assert.match(ids['song-video-frame'].children[0].src, /N7Z2Un0oxow/);
   await ids['song-play'].handlers.click(); ids['show-study'].handlers.click(); assert.equal(audio.paused, true); assert.equal(study.hidden, false);
+  assert.equal(ids['song-video-frame'].children.length, 0);
   sandbox.recording = true; ids['show-songs'].handlers.click(); assert.equal(ids['songs-panel'].hidden, true);
   await ids['song-play'].handlers.click(); assert.equal(audio.paused, true); assert.match(ids['song-status'].textContent, /麦克风/);
+  ids['song-use-video'].handlers.click(); assert.equal(ids['song-video-frame'].children.length, 0);
   sandbox.recording = false; audio.play = () => Promise.reject(new Error('decode')); await ids['song-play'].handlers.click(); assert.match(ids['song-status'].textContent, /无法播放/);
   assert.equal(fs.readFileSync('songs-player.js','utf8').includes('speechSynthesis'), false);
   console.log('PASS: complete accompanied MP3 recordings pinned by hash, bilingual cues, selection, playback, seeking, highlight, speed, loop, translation toggle, view changes and microphone exclusion.');

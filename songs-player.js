@@ -1,5 +1,5 @@
 'use strict';
-// LOCAL_SINGING_PLAYER_V3: complete recorded songs, never speech synthesis.
+// INLINE_SINGING_PLAYER_V4: local audio and optional inline official video, no popup playback.
 (() => {
   const element = id => document.getElementById(id);
   const audio = element('song-audio');
@@ -7,6 +7,27 @@
   const study = document.querySelector('.study-panels');
   const status = message => { element('song-status').textContent = message; };
   function busy() { return typeof speaking !== 'undefined' && (speaking || recording || testingMic); }
+  function audioView() {
+    // Removing an iframe stops its playback, including when returning to study or microphone tasks.
+    element('song-video-frame').replaceChildren(); element('song-video-panel').hidden = true;
+    element('song-player').dataset.playback = 'audio'; audio.hidden = false;
+    element('song-use-audio').setAttribute('aria-pressed', 'true'); element('song-use-video').setAttribute('aria-pressed', 'false');
+  }
+  function showVideo() {
+    if (busy()) { status('请先结束朗读或麦克风活动，再播放视频。'); return; }
+    pauseSong();
+    activeLine = -1;
+    [...element('song-lyrics').children].forEach(row => { row.classList.toggle('is-current', false); row.removeAttribute('aria-current'); });
+    const frame = document.createElement('iframe');
+    frame.src = `https://www.youtube.com/embed/${current.videoId}?playsinline=1&rel=0`;
+    frame.title = `${current.title} · 官方演唱视频`;
+    frame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    frame.setAttribute('allowfullscreen', ''); frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    element('song-video-frame').replaceChildren(frame); element('song-video-panel').hidden = false;
+    element('song-player').dataset.playback = 'video'; audio.hidden = true;
+    element('song-use-audio').setAttribute('aria-pressed', 'false'); element('song-use-video').setAttribute('aria-pressed', 'true');
+    status('视频已放在本页，请点击视频中央播放；若网络无法连接 YouTube，可切回本页音频。');
+  }
   function highlight() {
     let index = -1;
     current.lines.forEach((line, i) => { if (line[0] <= audio.currentTime) index = i; });
@@ -19,9 +40,10 @@
       if (i === index && !audio.paused && !element('songs-panel').hidden) row.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     });
   }
-  function pauseSong() { playRequest++; audio.pause(); element('song-play').textContent = '▶ 播放演唱'; }
+  function pauseSong() { playRequest++; audio.pause(); audioView(); element('song-play').textContent = '▶ 播放演唱'; }
   async function playSong() {
     if (busy()) { status('请先结束朗读、跟读或麦克风测试，再播放歌曲。'); return; }
+    audioView();
     const request = ++playRequest;
     try {
       await audio.play();
@@ -49,7 +71,7 @@
     });
     const credit = element('song-credit'); credit.replaceChildren();
     const source = document.createElement('a'); source.href = song.source; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = `${song.author} · 歌曲来源`;
-    element('song-original').href = song.audioSource; element('song-original').textContent = '试听官方原始演唱 MP3 ↗';
+    element('song-original').textContent = '🎵 在本页播放这首歌';
     credit.appendChild(source); credit.appendChild(document.createTextNode('。Sing Out Loud 儿童歌曲教学录音，完整文件未修改；中文翻译和近似时间提示由本项目编写。'));
     status('选好啦，点击播放，听完整的人声演唱与音乐伴奏。');
   }
@@ -71,6 +93,9 @@
   });
   element('show-songs').addEventListener('click', () => showSongs(true));
   element('show-study').addEventListener('click', () => showSongs(false));
+  element('song-original').addEventListener('click', playSong);
+  element('song-use-audio').addEventListener('click', () => { pauseSong(); status('已切回本页音频，点击播放即可听歌，无需打开其他窗口。'); });
+  element('song-use-video').addEventListener('click', showVideo);
   element('song-play').addEventListener('click', () => audio.paused ? playSong() : pauseSong());
   element('song-restart').addEventListener('click', () => { audio.currentTime = 0; highlight(); playSong(); });
   element('song-speed').addEventListener('change', () => { audio.playbackRate = Number(element('song-speed').value) || 1; });
