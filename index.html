@@ -24,6 +24,7 @@
     <section class="study-area" aria-label="学习与绘画 · Study and draw · เรียนและวาด">
     <section class="learning-controls" aria-label="学习设置">
       <h2>🎨 画画学习乐园</h2>
+      <nav class="activity-tabs" aria-label="选择学习活动"><button id="show-study" type="button" aria-pressed="true">🎨 学习画画</button><button id="show-songs" type="button" aria-pressed="false">🎵 英语儿歌 · Sing along</button></nav>
       <div class="learning-selects"><label>年龄 · Age · อายุ<select id="age-group"><option value="6-7">6–7 岁 · Ages 6–7 · อายุ 6–7 ปี</option><option value="8-9">8–9 岁 · Ages 8–9 · อายุ 8–9 ปี</option><option value="10">10 岁 · Age 10 · อายุ 10 ปี</option></select></label>
         <label>学习阶段 · Stage · ระดับชั้น<select id="school-stage"><option value="1">Stage 1 · 阶段 1 · ชั้น 1</option><option value="2">Stage 2 · 阶段 2 · ชั้น 2</option><option value="3">Stage 3 · 阶段 3 · ชั้น 3</option><option value="4">Stage 4 · 阶段 4 · ชั้น 4</option><option value="5">Stage 5 · 阶段 5 · ชั้น 5</option><option value="6">Stage 6 · 阶段 6 · ชั้น 6</option></select></label><label>学习内容 · Subject · วิชา<select id="subject"><option value="english">英语 · English · ภาษาอังกฤษ</option><option value="math">数学 · Math · คณิตศาสตร์</option></select></label>
         <label>难度 · Difficulty · ระดับ<select id="difficulty"><option value="easy">入门 · Easy · ง่าย</option><option value="medium">进阶 · Medium · ปานกลาง</option><option value="hard">挑战 · Hard · ยาก</option></select></label>
@@ -31,6 +32,16 @@
     </section>
 
 
+    <section id="songs-panel" class="songs-panel" hidden aria-labelledby="songs-heading">
+      <header class="songs-heading"><p class="eyebrow">LITTLE MUSIC CLUB</p><h2 id="songs-heading">听一听，唱一唱 🎵</h2><p>选一首喜欢的歌，看着中英歌词一起唱！</p></header>
+      <div class="songs-layout"><div id="song-list" class="song-list" role="group" aria-label="选择英语儿歌"></div>
+      <div class="song-player"><h3 id="song-title" lang="en"></h3><p id="song-description"></p>
+      <audio id="song-audio" controls preload="metadata" aria-label="儿歌播放器"></audio>
+      <div class="song-tools"><button id="song-play" type="button">▶ 播放歌曲</button><button id="song-restart" type="button">↻ 从头听</button><label>速度 <select id="song-speed"><option value="0.75">慢速 0.75×</option><option value="1" selected>正常 1×</option></select></label><label><input id="song-loop" type="checkbox"> 单曲循环</label><label><input id="song-translation" type="checkbox" checked> 显示中文</label></div>
+      <p id="song-status" role="status" aria-live="polite">点击播放，一起学唱吧。</p><p class="song-tip">点一句歌词，可从这一句附近开始听。高亮为学习提示。</p>
+      <div id="song-lyrics" class="song-lyrics" aria-label="中英对照歌词"></div>
+      <details class="song-credits"><summary>音频来源</summary><p id="song-credit"></p></details></div></div>
+    </section>
     <div class="study-panels">
     <section class="lesson" aria-label="当前关卡">
       <div class="apple" id="lesson-icon" aria-hidden="true">🍎</div>
@@ -82,5 +93,6 @@
   <script src="english-translations.js"></script>
   <script src="drawing-tasks.js"></script>
   <script src="learning.js"></script>
+  <script src="songs.js"></script>
 </body>
 </html>

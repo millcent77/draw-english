@@ -11,10 +11,25 @@ try {
     function Test-LearningServer {
         try {
             $learningBody = $learningClient.GetStringAsync("$learningUrl/app.js").GetAwaiter().GetResult()
-            return $learningBody.Contains('draw-say-pet-v1')
+            $learningSongs = $learningClient.GetStringAsync("$learningUrl/songs.js").GetAwaiter().GetResult()
+            return $learningBody.Contains('draw-say-pet-v1') -and $learningSongs.Contains('const englishSongs')
         } catch { return $false }
     }
     if (-not (Test-LearningServer)) {
+        # Restart only a verified older instance of this app, never an unrelated port owner.
+        try {
+            $learningExisting = $learningClient.GetStringAsync("$learningUrl/app.js").GetAwaiter().GetResult()
+            if ($learningExisting.Contains('draw-say-pet-v1')) {
+                $learningListener = Get-NetTCPConnection -LocalAddress '127.0.0.1' -LocalPort 8765 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($learningListener) {
+                    $learningOwner = Get-CimInstance Win32_Process -Filter "ProcessId=$($learningListener.OwningProcess)"
+                    if ($learningOwner.Name -eq 'node.exe' -and $learningOwner.CommandLine -match 'serve\.cjs') {
+                        Write-Host 'Restarting previous learning server for the update...'
+                        Stop-Process -Id $learningOwner.ProcessId -ErrorAction Stop
+                    }
+                }
+            }
+        } catch { Write-Host 'No verified older learning server to restart.' }
         $learningNode = Get-Command node -ErrorAction SilentlyContinue
         if (-not $learningNode) { throw 'Node.js was not found. Install Node.js, then try again.' }
         Write-Host 'Starting learning server (up to 8 seconds)...'
