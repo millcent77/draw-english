@@ -13,8 +13,9 @@ server.listen(0, '127.0.0.1', async () => {
   try {
     const port = server.address().port;
     assert.equal((await request(port, '/songs.js')).status, 200);
-    for (const name of ['twinkle', 'mary', 'row']) {
-      const path = `/assets/songs/${name}.ogg`, local = fs.readFileSync(`assets/songs/${name}.ogg`);
+    assert.equal((await request(port, '/songs-player.js')).status, 200);
+    for (const name of ['twinkle', 'mary', 'alphabet']) {
+      const path = `/assets/songs/${name}.mp3`, local = fs.readFileSync(`assets/songs/${name}.mp3`);
       const full = await request(port, path); assert.equal(full.status, 200); assert.deepEqual(full.body, local);
       const partial = await request(port, path, { Range: 'bytes=0-31' }); assert.equal(partial.status, 206); assert.deepEqual(partial.body, local.subarray(0, 32));
       const suffix = await request(port, path, { Range: 'bytes=-16' }); assert.equal(suffix.status, 206); assert.deepEqual(suffix.body, local.subarray(-16));

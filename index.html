@@ -36,8 +36,8 @@
       <header class="songs-heading"><p class="eyebrow">LITTLE MUSIC CLUB</p><h2 id="songs-heading">听一听，唱一唱 🎵</h2><p>选一首喜欢的歌，看着中英歌词一起唱！</p></header>
       <div class="songs-layout"><div id="song-list" class="song-list" role="group" aria-label="选择英语儿歌"></div>
       <div class="song-player"><h3 id="song-title" lang="en"></h3><p id="song-description"></p>
-      <audio id="song-audio" controls preload="metadata" aria-label="儿歌播放器"></audio>
-      <div class="song-tools"><button id="song-play" type="button">▶ 播放歌曲</button><button id="song-restart" type="button">↻ 从头听</button><label>速度 <select id="song-speed"><option value="0.75">慢速 0.75×</option><option value="1" selected>正常 1×</option></select></label><label><input id="song-loop" type="checkbox"> 单曲循环</label><label><input id="song-translation" type="checkbox" checked> 显示中文</label></div>
+      <audio id="song-audio" controls preload="metadata" aria-label="儿歌播放器"></audio><p class="song-network-note">完整歌曲录音 · 真人演唱与音乐伴奏 · 本地播放，不调用机器朗读。</p><a id="song-original" class="song-original" target="_blank" rel="noopener noreferrer">试听官方原始演唱 MP3 ↗</a>
+      <div class="song-tools"><button id="song-play" type="button">▶ 播放演唱</button><button id="song-restart" type="button">↻ 从头听</button><label>速度 <select id="song-speed"><option value="0.75">慢速 0.75×</option><option value="1" selected>正常 1×</option></select></label><label><input id="song-loop" type="checkbox"> 单曲循环</label><label><input id="song-translation" type="checkbox" checked> 显示中文</label></div>
       <p id="song-status" role="status" aria-live="polite">点击播放，一起学唱吧。</p><p class="song-tip">点一句歌词，可从这一句附近开始听。高亮为学习提示。</p>
       <div id="song-lyrics" class="song-lyrics" aria-label="中英对照歌词"></div>
       <details class="song-credits"><summary>音频来源</summary><p id="song-credit"></p></details></div></div>
@@ -94,5 +94,6 @@
   <script src="drawing-tasks.js"></script>
   <script src="learning.js"></script>
   <script src="songs.js"></script>
+  <script src="songs-player.js"></script>
 </body>
 </html>

@@ -2,12 +2,13 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const files = { '/': ['index.html', 'text/html; charset=utf-8'], '/index.html': ['index.html', 'text/html; charset=utf-8'], '/style.css': ['style.css', 'text/css; charset=utf-8'], '/learning.js': ['learning.js', 'text/javascript; charset=utf-8'], '/pets.js': ['pets.js', 'text/javascript; charset=utf-8'], '/curriculum.js': ['curriculum.js', 'text/javascript; charset=utf-8'], '/drawing-tasks.js': ['drawing-tasks.js', 'text/javascript; charset=utf-8'], '/english-translations.js': ['english-translations.js', 'text/javascript; charset=utf-8'], '/assets/pet-cat.png': ['assets/pet-cat.png', 'image/png'], '/assets/pet-dog.png': ['assets/pet-dog.png', 'image/png'], '/assets/pet-rabbit.png': ['assets/pet-rabbit.png', 'image/png'], '/assets/pet-panda.png': ['assets/pet-panda.png', 'image/png'], '/app.js': ['app.js', 'text/javascript; charset=utf-8'] };
-for (const name of ['twinkle', 'mary', 'row']) files['/assets/songs/' + name + '.ogg'] = ['assets/songs/' + name + '.ogg', 'audio/ogg'];
+for (const name of ['twinkle', 'mary', 'alphabet']) files['/assets/songs/' + name + '.mp3'] = ['assets/songs/' + name + '.mp3', 'audio/mpeg'];
+files['/songs-player.js'] = ['songs-player.js', 'text/javascript; charset=utf-8'];
 files['/songs.js'] = ['songs.js', 'text/javascript; charset=utf-8'];
 const server = http.createServer((request, response) => {
   const file = files[new URL(request.url, 'http://localhost').pathname];
   if (!file) { response.writeHead(404); response.end('Not found'); return; }
-  if (file[1] === 'audio/ogg') {
+  if (file[1] === 'audio/mpeg') {
     const audioPath = path.join(__dirname, file[0]);
     fs.stat(audioPath, (error, stat) => {
       if (error) { response.writeHead(404); response.end('Audio not found'); return; }

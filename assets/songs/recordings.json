@@ -1,0 +1,23 @@
+[
+  {
+    "id": "twinkle",
+    "source": "https://americanenglish.state.gov/files/ae/resource_files/05-5-twinkle_0.mp3",
+    "bytes": 3254687,
+    "sha256": "781776bcbc221aa39419c1452b72fc313798c8e9c054698384defe1d14eb9520",
+    "duration": 135.599
+  },
+  {
+    "id": "mary",
+    "source": "https://americanenglish.state.gov/files/ae/resource_files/06-6-mary-lamb_0.mp3",
+    "bytes": 2627121,
+    "sha256": "a5095dda9eb886350cca0c269c4c638aa986f652434e5c66f000702662747139",
+    "duration": 109.453
+  },
+  {
+    "id": "alphabet",
+    "source": "https://americanenglish.state.gov/files/ae/resource_files/01-1-alphabet_0.mp3",
+    "bytes": 2311771,
+    "sha256": "e7c7a45ee41ffb1162052da428f6e8e428b8343b46c4a10d81f875f46bf41cc7",
+    "duration": 96.314
+  }
+]
