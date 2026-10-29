@@ -69,7 +69,16 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   ids.record.handlers.click(); app.session.onaudiostart(); assert.match(ids['recognition-status'].textContent, /已开始收音/); app.session.onspeechstart(); assert.match(ids['recognition-status'].textContent, /听到你的声音/); app.session.onerror({ error: 'network' }); assert.equal(ids.spelling.disabled, false); assert.match(ids['recognition-status'].textContent, /服务连接失败/);
   const slow = setup(); slow.ids['speech-rate'].value = '0.6'; slow.ids['pet-options'].children[0].handlers.click(); slow.ids.done.handlers.click(); await slow.flush(); assert.equal(slow.spoken[0].rate, 0.6); assert.ok(slow.spoken.slice(1, -1).every(u => u.rate === 1));
   const fileApp = setup({ protocol: 'file:' }); fileApp.ids['pet-options'].children[0].handlers.click(); fileApp.ids.done.handlers.click(); await fileApp.flush(); assert.equal(fileApp.ids.record.disabled, false); assert.equal(fileApp.ids.record.textContent, '打开跟读页面 →'); assert.equal(fileApp.ids.spelling.disabled, false);
-  let destination; fileApp.context.window.location.assign = url => { destination = url; }; fileApp.ids.record.handlers.click(); assert.equal(destination, 'http://127.0.0.1:8765/#practice');
+  let destination; fileApp.context.window.location.assign = url => { destination = url; };
+  fileApp.context.AbortController = AbortController;
+  fileApp.context.fetch = async () => { throw new TypeError('Connection refused'); };
+  await fileApp.ids.record.handlers.click(); assert.equal(destination, undefined);
+  assert.match(fileApp.ids['recognition-status'].textContent, /跟读服务未启动/);
+  assert.equal(fileApp.ids.spelling.disabled, false);
+  await fileApp.ids['test-mic'].handlers.click(); assert.equal(destination, undefined);
+  assert.match(fileApp.ids['mic-status'].textContent, /跟读服务未启动/);
+  fileApp.context.fetch = async (url, options) => { assert.equal(url, 'http://127.0.0.1:8765/app.js'); assert.equal(options.mode, 'no-cors'); };
+  await fileApp.ids.record.handlers.click(); assert.equal(destination, 'http://127.0.0.1:8765/#practice');
   const mic = setup(); let stoppedTracks = 0, constraints;
   const track = { stop() { stoppedTracks++; } };
   mic.context.navigator = { mediaDevices: { async getUserMedia(options) { constraints = options; return { getAudioTracks: () => [track], getTracks: () => [track] }; }, async enumerateDevices() { return [{ kind: 'audioinput', deviceId: 'headset', label: 'Headset' }]; } } };

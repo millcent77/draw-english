@@ -226,6 +226,28 @@ function celebrate(level) {
 }
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const fileMode = window.location?.protocol === 'file:';
+let openingPractice = false;
+async function openPracticePage() {
+  if (openingPractice) return;
+  openingPractice = true;
+  const message = '正在检查跟读服务… · Checking practice server… · กำลังตรวจสอบเซิร์ฟเวอร์…';
+  $('recognition-status').textContent = message;
+  $('mic-status').textContent = message;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
+  try {
+    // A file page cannot read the HTTP response, but can check whether it connects.
+    await fetch('http://127.0.0.1:8765/app.js', { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
+    window.location.assign('http://127.0.0.1:8765/#practice');
+  } catch {
+    const error = '跟读服务未启动：请打开项目文件夹中的“启动学习.cmd”，等待学习页自动打开，再开始跟读。此页面可继续画画和拼写。 · Start 启动学习.cmd in the project folder, then use the page it opens. · เปิดไฟล์ 启动学习.cmd ในโฟลเดอร์โปรเจกต์ แล้วใช้หน้าที่เปิดขึ้น';
+    $('recognition-status').textContent = error;
+    $('mic-status').textContent = error;
+  } finally {
+    clearTimeout(timeout);
+    openingPractice = false;
+  }
+}
 let heard = false, readCorrect = false, rewarded = false, speaking = false, recording = false;
 let recognizer = null, recordingTimer = null;
 let testingMic = false, stopMicTest = null;
@@ -268,7 +290,7 @@ function monitorMicrophone(stream) {
 $('test-mic').addEventListener('click', async () => {
   if (testingMic) { stopMicTest?.(); return; }
   if (recording || speaking) return;
-  if (fileMode) { window.location.assign('http://127.0.0.1:8765/#practice'); return; }
+  if (fileMode) { await openPracticePage(); return; }
   if (!navigator.mediaDevices?.getUserMedia) { $('mic-status').textContent = '浏览器无法访问麦克风，请检查网址和权限。'; return; }
   testingMic = true; syncPractice();
   let stream, cleanup = () => {}, timer;
@@ -327,7 +349,7 @@ $('done').addEventListener('click', () => {
 });
 $('repeat').addEventListener('click', () => playLesson(true));
 $('record').addEventListener('click', async () => {
-  if (fileMode) { window.location.assign('http://127.0.0.1:8765/#practice'); return; }
+  if (fileMode) { await openPracticePage(); return; }
   if (recording) { recognizer?.abort(); return; }
   if (!heard || !Recognition || fileMode || speaking || testingMic || rewarded) return;
   readCorrect = false; recording = true; syncPractice();
