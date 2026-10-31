@@ -108,10 +108,10 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   assert.match(fileApp.ids['mic-status'].textContent, /自动启动/);
   const mic = setup(); let stoppedTracks = 0, constraints;
   const track = { stop() { stoppedTracks++; } };
-  mic.context.navigator = { mediaDevices: { async getUserMedia(options) { constraints = options; return { getAudioTracks: () => [track], getTracks: () => [track] }; }, async enumerateDevices() { return [{ kind: 'audioinput', deviceId: 'headset', label: 'Headset' }]; } } };
-  mic.ids['mic-device'].value = 'headset';
-  await mic.ids['test-mic'].handlers.click(); assert.equal(constraints.audio.deviceId.exact, 'headset'); assert.equal(mic.ids.record.disabled, true); mic.ids['test-mic'].handlers.click(); assert.equal(stoppedTracks, 1);
-  mic.ids['pet-options'].children[0].handlers.click(); mic.ids.repeat.handlers.click(); await mic.flush(); await mic.ids.record.handlers.click(); assert.equal(mic.session.track, track); assert.equal(mic.session.continuous, true); assert.equal(mic.session.interimResults, true);
+  mic.context.navigator = { mediaDevices: { async getUserMedia(options) { constraints = options; return { getAudioTracks: () => [track], getTracks: () => [track] }; }, async enumerateDevices() { throw new Error('Default input must not enumerate devices'); } } };
+  assert.equal(mic.ids['mic-device'], undefined);
+  await mic.ids['test-mic'].handlers.click(); assert.equal(constraints.audio, true); assert.equal(mic.ids.record.disabled, true); mic.ids['test-mic'].handlers.click(); assert.equal(stoppedTracks, 1);
+  mic.ids['pet-options'].children[0].handlers.click(); mic.ids.repeat.handlers.click(); await mic.flush(); await mic.ids.record.handlers.click(); assert.equal(mic.session.track, track); assert.equal(constraints.audio,true); assert.equal(mic.session.continuous, true); assert.equal(mic.session.interimResults, true);
   const interim = [{ transcript: 'Apple' }]; interim.isFinal = false; mic.session.onresult({ results: [interim], resultIndex: 0 }); mic.ids.spelling.value = 'apple'; submit(mic); assert.equal(mic.ids.points.textContent, '⭐ 0');
   mic.session.onspeechstart(); mic.session.onerror({ error: 'no-speech' }); assert.match(mic.ids['recognition-status'].textContent, /不代表你没有读/); assert.equal(stoppedTracks, 2);
   await mic.ids.record.handlers.click(); mic.transcript('Apple'); assert.equal(stoppedTracks, 3); submit(mic); assert.equal(mic.ids.points.textContent, '⭐ 10');
