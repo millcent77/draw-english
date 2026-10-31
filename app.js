@@ -233,18 +233,18 @@ async function openPracticePage() {
   const message = '正在检查跟读服务… · Checking practice server… · กำลังตรวจสอบเซิร์ฟเวอร์…';
   $('recognition-status').textContent = message;
   $('mic-status').textContent = message;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 3000);
   try {
-    // A file page cannot read the HTTP response, but can check whether it connects.
-    await fetch('http://127.0.0.1:8765/app.js', { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
-    window.location.assign('http://127.0.0.1:8765/#practice');
+    // A registered Windows launcher starts the server even when it is stopped.
+    // Keep this directly in the click gesture so the browser can open the app.
+    window.location.assign('draw-say://practice');
+    const hint = '请在浏览器提示中选择“打开”，服务会自动启动并打开跟读页。 · Choose Open to start practice. · เลือกเปิดเพื่อเริ่มฝึกอ่าน';
+    $('recognition-status').textContent = hint;
+    $('mic-status').textContent = hint;
   } catch {
     const error = '跟读服务未启动：请打开项目文件夹中的“启动学习.cmd”，等待学习页自动打开，再开始跟读。此页面可继续画画和拼写。 · Start 启动学习.cmd in the project folder, then use the page it opens. · เปิดไฟล์ 启动学习.cmd ในโฟลเดอร์โปรเจกต์ แล้วใช้หน้าที่เปิดขึ้น';
     $('recognition-status').textContent = error;
     $('mic-status').textContent = error;
   } finally {
-    clearTimeout(timeout);
     openingPractice = false;
   }
 }
@@ -313,7 +313,7 @@ function syncPractice() {
   $('speak').disabled = speaking || recording || testingMic;
   $('repeat').disabled = speaking || recording || testingMic || rewarded;
   $('record').disabled = fileMode ? false : !heard || !Recognition || speaking || testingMic || rewarded;
-  $('record').textContent = fileMode ? '打开跟读页面 →' : recording ? '⏹ 停止跟读' : '🎤 开始跟读';
+  $('record').textContent = fileMode ? '🎤 开始跟读' : recording ? '⏹ 停止跟读' : '🎤 开始跟读';
   $('spelling').disabled = rewarded;
   $('check-answer').disabled = speaking || recording || rewarded;
   $('speech-rate').disabled = speaking || recording;
@@ -337,7 +337,7 @@ async function playLesson(spell) {
   }
   speaking = false; heard = success; syncPractice();
   $('listen-step').textContent = success ? '✓ 听完啦，现在轮到你读！' : '朗读失败，请点击“再听一次”重试。';
-  $('recognition-status').textContent = fileMode ? '当前是文件页面，跟读请双击“启动学习.cmd”，然后访问 http://127.0.0.1:8765。在新网址首次授权时选择“访问该网站时允许”。拼写仍可输入。' : !Recognition ? '此浏览器不支持跟读识别，请使用支持语音识别的浏览器；无法识别时不发放积分。拼写仍可练习。' : success ? '点击“开始跟读”，等待“麦克风已就绪”后说出整个单词。' : '请检查声音及英语语音设置，成功听完后才能跟读。';
+  $('recognition-status').textContent = fileMode ? '点击“开始跟读”会自动启动学习服务；浏览器询问时请选择“打开”。首次使用跟读请允许麦克风。 · Click Start reading, then Open. · กดเริ่มฝึกอ่าน แล้วเลือกเปิด' : !Recognition ? '此浏览器不支持跟读识别，请使用支持语音识别的浏览器；无法识别时不发放积分。拼写仍可练习。' : success ? '点击“开始跟读”，等待“麦克风已就绪”后说出整个单词。' : '请检查声音及英语语音设置，成功听完后才能跟读。';
   status.textContent = success ? '听完啦，慢慢跟读，不着急！' : '朗读未完成，可以再次尝试。';
 }
 $('done').addEventListener('click', () => {
@@ -425,7 +425,7 @@ $('next-level').addEventListener('click', () => {
   heard = false; readCorrect = false; rewarded = false; completing = false;
   $('practice').hidden = false; $('next-level').hidden = true; $('spelling').value = '';
   $('answer-status').textContent = ''; $('listen-step').textContent = '点击“朗读”或“再听一次”，听完后跟读';
-  $('recognition-status').textContent = fileMode ? '请打开 http://127.0.0.1:8765 使用跟读，拼写可直接输入。' : '先听朗读，再跟读；也可以先输入单词。'; $('read-step').textContent = '点击麦克风，说出这个英文单词'; $('type-step').textContent = '用键盘拼出单词';
+  $('recognition-status').textContent = fileMode ? '点击“开始跟读”自动打开跟读页，拼写可直接输入。' : '先听朗读，再跟读；也可以先输入单词。'; $('read-step').textContent = '点击麦克风，说出这个英文单词'; $('type-step').textContent = '用键盘拼出单词';
   renderLevel(); renderPet(); syncPractice(); $('speak').focus();
 });
 renderLevel();
@@ -433,4 +433,4 @@ renderPet();
 syncPractice();
 
 $('practice').hidden = false;
-if (fileMode) $('recognition-status').textContent = '当前从文件打开。请点击下方本地网址使用跟读；拼写可直接输入。';
+if (fileMode) $('recognition-status').textContent = '点击“开始跟读”自动启动跟读服务；拼写可直接输入。';

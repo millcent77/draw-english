@@ -68,17 +68,14 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   assert.equal(unsupported.ids.record.disabled, true); submit(unsupported); assert.equal(unsupported.ids.points.textContent, '⭐ 0');
   ids.record.handlers.click(); app.session.onaudiostart(); assert.match(ids['recognition-status'].textContent, /已开始收音/); app.session.onspeechstart(); assert.match(ids['recognition-status'].textContent, /听到你的声音/); app.session.onerror({ error: 'network' }); assert.equal(ids.spelling.disabled, false); assert.match(ids['recognition-status'].textContent, /服务连接失败/);
   const slow = setup(); slow.ids['speech-rate'].value = '0.6'; slow.ids['pet-options'].children[0].handlers.click(); slow.ids.done.handlers.click(); await slow.flush(); assert.equal(slow.spoken[0].rate, 0.6); assert.ok(slow.spoken.slice(1, -1).every(u => u.rate === 1));
-  const fileApp = setup({ protocol: 'file:' }); fileApp.ids['pet-options'].children[0].handlers.click(); fileApp.ids.done.handlers.click(); await fileApp.flush(); assert.equal(fileApp.ids.record.disabled, false); assert.equal(fileApp.ids.record.textContent, '打开跟读页面 →'); assert.equal(fileApp.ids.spelling.disabled, false);
+  const fileApp = setup({ protocol: 'file:' }); fileApp.ids['pet-options'].children[0].handlers.click(); fileApp.ids.done.handlers.click(); await fileApp.flush(); assert.equal(fileApp.ids.record.disabled, false); assert.equal(fileApp.ids.record.textContent, '🎤 开始跟读'); assert.equal(fileApp.ids.spelling.disabled, false);
   let destination; fileApp.context.window.location.assign = url => { destination = url; };
-  fileApp.context.AbortController = AbortController;
-  fileApp.context.fetch = async () => { throw new TypeError('Connection refused'); };
-  await fileApp.ids.record.handlers.click(); assert.equal(destination, undefined);
-  assert.match(fileApp.ids['recognition-status'].textContent, /跟读服务未启动/);
+  await fileApp.ids.record.handlers.click(); assert.equal(destination, 'draw-say://practice');
+  assert.match(fileApp.ids['recognition-status'].textContent, /自动启动/);
   assert.equal(fileApp.ids.spelling.disabled, false);
-  await fileApp.ids['test-mic'].handlers.click(); assert.equal(destination, undefined);
-  assert.match(fileApp.ids['mic-status'].textContent, /跟读服务未启动/);
-  fileApp.context.fetch = async (url, options) => { assert.equal(url, 'http://127.0.0.1:8765/app.js'); assert.equal(options.mode, 'no-cors'); };
-  await fileApp.ids.record.handlers.click(); assert.equal(destination, 'http://127.0.0.1:8765/#practice');
+  destination = undefined;
+  await fileApp.ids['test-mic'].handlers.click(); assert.equal(destination, 'draw-say://practice');
+  assert.match(fileApp.ids['mic-status'].textContent, /自动启动/);
   const mic = setup(); let stoppedTracks = 0, constraints;
   const track = { stop() { stoppedTracks++; } };
   mic.context.navigator = { mediaDevices: { async getUserMedia(options) { constraints = options; return { getAudioTracks: () => [track], getTracks: () => [track] }; }, async enumerateDevices() { return [{ kind: 'audioinput', deviceId: 'headset', label: 'Headset' }]; } } };
@@ -247,6 +244,16 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
     assert.equal(png.readUInt32BE(16),png.readUInt32BE(20)*2); assert.ok(png.readUInt32BE(16)>=1024);
   }
   console.log('PASS: adoption switch/cancel preserves points, growth and course position.');
+  const motion = setup({saved:JSON.stringify({pet:'cat',points:100,growth:900,level:0})});
+  for (const move of ['blink','wave','jump','dance','stretch','spin','glow','cheer','eat','cuddle']) {
+    vm.runInContext(`playPetMove('${move}')`, motion.context);
+    assert.equal(motion.ids['pet-avatar'].attributes['data-motion'], move);
+    assert.ok(motion.ids['pet-action-status'].textContent);
+  }
+  const character = motion.ids['pet-avatar'].children[0];
+  assert.equal(character.children.filter(part=>part.className?.startsWith('pet-sprite ')).length, 2);
+  assert.equal(JSON.parse(motion.saved).growth, 900);
+  console.log('PASS: all ten pet reactions select independently without changing growth.');
   console.log('PASS: complete Chinese/Thai coverage and answer translation visibility/reset.');
   console.log('PASS: six distinct stage banks, stage storage, decimals/percentages, scaled geometry and directions.');
   console.log('PASS: harder math, fraction painting, rectangle geometry, listening color/position and reward gates.');

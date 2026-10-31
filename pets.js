@@ -29,7 +29,7 @@ function playPetMove(move) {
   avatar.setAttribute('data-motion', ''); void avatar.offsetWidth;
   avatar.setAttribute('data-motion', move);
   document.getElementById('pet-action-status').textContent = move === 'eat' ? '好吃！ · Yummy! · อร่อย!' : move === 'cuddle' ? '喜欢你摸摸我！ · I love your pats! · ชอบให้เธอลูบฉัน!' : petMoves.find(item => item.id === move).name;
-  petMotionTimer = setTimeout(() => avatar.setAttribute('data-motion', ''), 1800);
+  petMotionTimer = setTimeout(() => avatar.setAttribute('data-motion', ''), 2600);
 }
 function renderPetCharacter(pet) {
   const avatar = document.getElementById('pet-avatar');
@@ -47,7 +47,11 @@ function renderPetCharacter(pet) {
       }
       character.appendChild(node);
     }
-    const sprite=document.createElement('span');sprite.className='pet-sprite';sprite.setAttribute('aria-hidden','true');character.appendChild(sprite);
+    // Matching crops preserve the artwork while letting head and body move separately.
+    for (const section of ['lower', 'upper']) {
+      const sprite=document.createElement('span');sprite.className=`pet-sprite pet-sprite-${section}`;sprite.setAttribute('aria-hidden','true');character.appendChild(sprite);
+    }
+    const effect=document.createElement('span');effect.className='pet-motion-effect';effect.setAttribute('aria-hidden','true');character.appendChild(effect);
     const heart = document.createElement('span'); heart.className = 'pet-affection'; heart.textContent = '♥'; character.appendChild(heart);
     avatar.appendChild(character);
   }

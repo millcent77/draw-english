@@ -1,7 +1,9 @@
+param([switch]$Practice)
 $ErrorActionPreference = 'Stop'
 $learningUrl = 'http://127.0.0.1:8765'
 $learningClient = $null
 try {
+    & (Join-Path $PSScriptRoot 'install-launcher.ps1')
     Write-Host 'Checking learning page...'
     Add-Type -AssemblyName System.Net.Http
     $learningHandler = New-Object System.Net.Http.HttpClientHandler
@@ -48,8 +50,14 @@ try {
     }
     if (-not (Test-LearningServer)) { throw 'Learning page did not respond. Port 8765 may be occupied or blocked. Check learning-server-error.log.' }
     Write-Host "Opening $learningUrl in your browser..."
-    Start-Process $learningUrl
+    $learningOpenUrl = if ($Practice) { "$learningUrl/#practice" } else { $learningUrl }
+    Start-Process $learningOpenUrl
 } catch {
+    if ($Practice) {
+        $learningShell = New-Object -ComObject WScript.Shell
+        $null = $learningShell.Popup("Unable to start learning: $($_.Exception.Message)", 0, 'Draw and Say', 16)
+        exit 1
+    }
     Write-Host "Unable to open learning page: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "Page address: $learningUrl"
     Read-Host 'Press Enter to close'
