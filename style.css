@@ -90,3 +90,5 @@ body{background:radial-gradient(ellipse at 0 0,#e5f6ff,transparent 60%),radial-g
 [data-animating=true] .pet-motion-effect{animation:pose-effects .9s ease-in-out infinite}
 @keyframes pose-effects{50%{opacity:1;transform:translateY(-8px)}}
 @media(prefers-reduced-motion:reduce){.pet-avatar[data-motion] .pet-character,.pet-motion-effect{animation:none!important}.pet-avatar[data-animating=true] .pet-motion-effect{opacity:1}}
+
+.voice-label{display:flex;align-items:center;gap:4px;font-size:11px;min-width:0;max-width:100%}.voice-label select{min-width:0;max-width:220px;font:inherit;padding:5px;border:1px solid #c7badf;border-radius:8px;background:white;color:#493b6e}#voice-status{font-size:10px;line-height:1.4;margin:4px 0;color:#71658b;overflow-wrap:anywhere}.practice-audio .speed-label select{max-width:150px}@media(max-width:650px){.voice-label select{min-height:44px}.practice-audio .speed-label select{min-height:44px}}

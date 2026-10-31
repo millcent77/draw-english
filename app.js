@@ -173,23 +173,66 @@ function renderLevel() {
   status.textContent = `轮到 ${level.word} 啦！可以跟着淡淡的线框画，也可以自由发挥。`;
 }
 let voices = [];
-function loadVoices() { voices = window.speechSynthesis.getVoices(); }
+let voicePreference = '';
+let voiceListSignature = '';
+try {
+  const saved = JSON.parse(localStorage.getItem('draw-say-speech-v1'));
+  if (saved && typeof saved.voice === 'string') voicePreference = saved.voice;
+  if (saved && [0.8,0.9,1].includes(saved.rate)) $('speech-rate').value = String(saved.rate);
+} catch { /* Browser settings may be unavailable. */ }
+const voiceKey = voice => voice.voiceURI || `${voice.lang}|${voice.name || ''}`;
+function voiceScore(voice) {
+  const lang=voice.lang.replace('_','-').toLowerCase(), name=voice.name || '';
+  return (lang==='en-us'?50:lang==='en-gb'?40:10) + (/natural|neural/i.test(name)?30:0) + (/google/i.test(name)?15:0) + (/zira/i.test(name)?8:/david/i.test(name)?4:0);
+}
+function selectedEnglishVoice() {
+  return voices.find(voice=>voiceKey(voice)===voicePreference) || voices[0] || null;
+}
+function updateVoiceStatus() {
+  const voice=selectedEnglishVoice();
+  $('voice-status').textContent=voice ? `英语声音 · Voice · เสียง: ${voice.name || 'English'} (${voice.lang})` : '尚无英语声音，请等待加载；若持续为空，请使用装有英语语音的浏览器。 · No English voice available. · ยังไม่มีเสียงภาษาอังกฤษ';
+}
+function loadVoices() {
+  voices = window.speechSynthesis.getVoices().filter(voice=>/^en(?:[-_]|$)/i.test(voice.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  const signature=voices.map(voiceKey).join(';');
+  if (signature!==voiceListSignature) {
+    voiceListSignature=signature;
+    const auto=document.createElement('option'); auto.value=''; auto.textContent='自动 · Auto · อัตโนมัติ';
+    const options=voices.map(voice=>{const option=document.createElement('option');option.value=voiceKey(voice);option.textContent=`${voice.name || 'English'} (${voice.lang})`;return option;});
+    $('speech-voice').replaceChildren(auto,...options);
+    $('speech-voice').value=voices.some(voice=>voiceKey(voice)===voicePreference)?voicePreference:'';
+  }
+  updateVoiceStatus();
+}
+function saveSpeechSettings() {
+  try { localStorage.setItem('draw-say-speech-v1',JSON.stringify({voice:voicePreference,rate:Number($('speech-rate').value)})); } catch {}
+}
+$('speech-voice').addEventListener('change',()=>{voicePreference=$('speech-voice').value;updateVoiceStatus();saveSpeechSettings();});
+$('speech-rate').addEventListener('change',saveSpeechSettings);
 if ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
   loadVoices();
   window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
 }
 // Always settle the promise, even if a browser never emits speech events.
-function speakText(text, rate = Number($('speech-rate').value) || 1) {
+async function speakText(text, rate = Number($('speech-rate').value) || 1) {
   if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
     status.textContent = '这个浏览器暂时不能朗读，请试试 Chrome 或 Edge。';
     return Promise.resolve(false);
   }
   window.speechSynthesis.cancel();
   loadVoices();
+  // Some engines populate voices after the first page render.
+  if (!voices.length) {
+    for (let attempt=0;attempt<6 && !voices.length;attempt++) {
+      await new Promise(resolve=>setTimeout(resolve,250)); loadVoices();
+    }
+  }
+  const voice=selectedEnglishVoice();
+  if (!voice) { updateVoiceStatus(); status.textContent=$('voice-status').textContent; return false; }
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.voice = voices.find(voice => voice.lang.replace('_', '-').toLowerCase() === 'en-us') || null;
-  utterance.rate = rate;
+  utterance.lang = voice.lang.replace('_','-');
+  utterance.voice = voice;
+  utterance.rate = Math.min(1,Math.max(0.8,Number(rate)||1));
   utterance.pitch = 1;
   utterance.volume = 1;
   return new Promise(resolve => {
@@ -200,7 +243,7 @@ function speakText(text, rate = Number($('speech-rate').value) || 1) {
       clearTimeout(timeout);
       resolve(success);
     };
-    const timeout = setTimeout(() => { window.speechSynthesis.cancel(); finishSpeech(false); }, 12000);
+    const timeout = setTimeout(() => { window.speechSynthesis.cancel(); finishSpeech(false); }, Math.min(120000,Math.max(15000,10000 + text.trim().split(/\s+/).length * 900 / utterance.rate)));
     utterance.onstart = () => { status.textContent = `仔细听：${text}`; };
     utterance.onend = () => finishSpeech(true);
     utterance.onerror = () => finishSpeech(false);
@@ -317,6 +360,7 @@ function syncPractice() {
   $('spelling').disabled = rewarded;
   $('check-answer').disabled = speaking || recording || rewarded;
   $('speech-rate').disabled = speaking || recording;
+  $('speech-voice').disabled = speaking || recording;
   $('test-mic').disabled = speaking || recording;
   $('test-mic').textContent = testingMic ? '停止麦克风测试' : '检查麦克风';
   $('mic-device').disabled = recording || testingMic;
@@ -326,7 +370,7 @@ async function playLesson(spell) {
   speaking = true; heard = false; syncPractice();
   const word = levels[levelIndex].word;
   let success = await speakText(word);
-  if (success && spell) {
+  if (success && spell && /^[A-Za-z]+$/.test(word.trim())) {
     await pause(250);
     for (const letter of word.toUpperCase().replace(/[^A-Z]/g, '')) {
       success = await speakText(letter, 1);
@@ -358,7 +402,7 @@ $('record').addEventListener('click', async () => {
   let received = false;
   let detectedSpeech = false, micStream = null, cleanupMeter = () => {};
   const session = new Recognition(); recognizer = session;
-  session.lang = 'en-US'; session.continuous = true; session.interimResults = true; session.maxAlternatives = 1;
+  session.lang = selectedEnglishVoice()?.lang.replace('_','-') || 'en-US'; session.continuous = true; session.interimResults = true; session.maxAlternatives = 1;
   const stop = () => { clearTimeout(recordingTimer); cleanupMeter(); micStream?.getTracks().forEach(track => track.stop()); if (recognizer === session) { recording = false; recognizer = null; syncPractice(); } };
   session.onaudiostart = () => {
     if (recognizer !== session) return;

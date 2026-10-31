@@ -4,7 +4,7 @@ const vm = require('node:vm');
 function element(extra = {}) {
   return Object.assign({ textContent: '', value: '', hidden: false, children: [], handlers: {}, dataset: {}, style: { setProperty(name, value) { this[name] = value; } }, classList: { toggle() {}, add() {}, remove() {} }, setAttribute(name, value) { (this.attributes ||= {})[name] = value; }, addEventListener(name, fn) { const previous = this.handlers[name]; this.handlers[name] = previous ? (...args) => { previous(...args); return fn(...args); } : fn; }, appendChild(child) { this.children.push(child); }, replaceChildren(...children) { this.children = children; }, focus() {}, scrollIntoView() {} }, extra);
 }
-function setup({ recognition = true, saved = null, protocol = 'http:', learning = false, courseSaved = null, drawingSaved = null } = {}) {
+function setup({ recognition = true, saved = null, protocol = 'http:', learning = false, courseSaved = null, drawingSaved = null, speechSaved = null } = {}) {
   const ids = {};
   for (const match of fs.readFileSync('index.html', 'utf8').matchAll(/id="([^"]+)"/g)) ids[match[1]] = element();
   ids['speech-rate'].value = '1';
@@ -13,14 +13,14 @@ function setup({ recognition = true, saved = null, protocol = 'http:', learning 
   Object.assign(ids.canvas, { width: 600, height: 400, getContext: () => drawingContext });
   const colors = ['#ed4545', '#f4bd24', '#3884ea', '#35a96e'].map(color => element({ dataset: { color }, textContent: 'color' }));
   ids.celebration.hidden = true;
-  let timers = [], stored = saved, spoken = [], session; const courseStore = { 'draw-say-courses-v1': courseSaved, 'draw-say-drawing-v1': drawingSaved };
+  let timers = [], stored = saved, spoken = [], session; const courseStore = { 'draw-say-courses-v1': courseSaved, 'draw-say-drawing-v1': drawingSaved, 'draw-say-speech-v1': speechSaved };
   const speech = { getVoices: () => [{ lang: 'en-US' }], addEventListener() {}, cancel() {}, speak(u) { spoken.push(u); queueMicrotask(() => u.onend()); } };
   class Recognition { constructor() { session = this; } start(track) { this.track = track; } stop() {} abort() { this.onerror?.({ error: 'aborted' }); } }
   const context = { document: { getElementById: id => ids[id], querySelector: () => (ids.lesson ||= element()), querySelectorAll: () => colors, createElement: tag => { const node = element({naturalWidth:793,naturalHeight:1983}); if (tag === 'canvas') node.getContext = () => ({clearRect(){},save(){},restore(){},translate(){},scale(){},drawImage(...args){(node.drawnFrames ||= []).push(args);}}); if (tag === 'img') Object.defineProperty(node, 'src', { set(value) { this.source = value; this.handlers.load?.(); }, get() { return this.source; } }); return node; }, createElementNS: () => element(), createTextNode: text => ({ textContent: text }) }, window: { speechSynthesis: speech, SpeechSynthesisUtterance: true, matchMedia: () => ({ matches: true }), location: { protocol } }, localStorage: { getItem: key => key === 'draw-say-pet-v1' ? stored : courseStore[key], setItem: (key, value) => { if (key === 'draw-say-pet-v1') stored = value; else courseStore[key] = value; } }, SpeechSynthesisUtterance: function(text) { this.text = text; }, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { timers = timers.filter(item => item !== t); }, Promise, Math };
   if (recognition) context.window.SpeechRecognition = Recognition;
   vm.createContext(context); vm.runInContext(fs.readFileSync('pets.js', 'utf8'), context); vm.runInContext(fs.readFileSync('app.js', 'utf8'), context);
   if (learning) { vm.runInContext(fs.readFileSync('curriculum.js', 'utf8'), context); vm.runInContext(fs.readFileSync('english-translations.js', 'utf8'), context); vm.runInContext(fs.readFileSync('drawing-tasks.js', 'utf8'), context); vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context); }
-  return { ids, context, spoken, get session() { return session; }, get saved() { return stored; }, get courseSaved() { return courseStore['draw-say-courses-v1']; }, get drawingSaved() { return courseStore['draw-say-drawing-v1']; }, async flush() { for (let i = 0; i < 100; i++) { await Promise.resolve(); const short = timers.filter(t => t.ms < 12000); timers = timers.filter(t => t.ms >= 12000); short.forEach(t => t.fn()); } }, transcript(text) { const result = [{ transcript: text }]; result.isFinal = true; session.onresult({ resultIndex: 0, results: [result] }); } };
+  return { ids, context, spoken, get session() { return session; }, get saved() { return stored; }, get courseSaved() { return courseStore['draw-say-courses-v1']; }, get drawingSaved() { return courseStore['draw-say-drawing-v1']; }, get speechSaved() { return courseStore['draw-say-speech-v1']; }, async flush() { for (let i = 0; i < 100; i++) { await Promise.resolve(); const short = timers.filter(t => t.ms < 12000); timers = timers.filter(t => t.ms >= 12000); short.forEach(t => t.fn()); } }, transcript(text) { const result = [{ transcript: text }]; result.isFinal = true; session.onresult({ resultIndex: 0, results: [result] }); } };
 }
 assert.equal((fs.readFileSync('index.html', 'utf8').match(/src="learning.js"/g) || []).length, 1);
 const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() {} });
@@ -67,7 +67,37 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
   const unsupported = setup({ recognition: false }); unsupported.ids['pet-options'].children[0].handlers.click(); unsupported.ids.done.handlers.click(); await unsupported.flush();
   assert.equal(unsupported.ids.record.disabled, true); submit(unsupported); assert.equal(unsupported.ids.points.textContent, '⭐ 0');
   ids.record.handlers.click(); app.session.onaudiostart(); assert.match(ids['recognition-status'].textContent, /已开始收音/); app.session.onspeechstart(); assert.match(ids['recognition-status'].textContent, /听到你的声音/); app.session.onerror({ error: 'network' }); assert.equal(ids.spelling.disabled, false); assert.match(ids['recognition-status'].textContent, /服务连接失败/);
-  const slow = setup(); slow.ids['speech-rate'].value = '0.6'; slow.ids['pet-options'].children[0].handlers.click(); slow.ids.done.handlers.click(); await slow.flush(); assert.equal(slow.spoken[0].rate, 0.6); assert.ok(slow.spoken.slice(1, -1).every(u => u.rate === 1));
+  const slow = setup(); slow.ids['speech-rate'].value = '0.6'; slow.ids['pet-options'].children[0].handlers.click(); slow.ids.done.handlers.click(); await slow.flush(); assert.equal(slow.spoken[0].rate, 0.8); assert.ok(slow.spoken.slice(1, -1).every(u => u.rate === 1));
+  const nativeVoices = [{lang:'zh-CN',name:'Chinese',voiceURI:'zh'}, {lang:'en-GB',name:'English UK',voiceURI:'uk'}, {lang:'en-US',name:'English US',voiceURI:'us'}, {lang:'en-US',name:'English US Natural',voiceURI:'natural'}];
+  const native = setup(); native.context.window.speechSynthesis.getVoices=()=>nativeVoices;
+  vm.runInContext('loadVoices()',native.context);
+  assert.equal(native.ids['speech-voice'].children.length,4);
+  let reading=vm.runInContext("speakText('Apple')",native.context); await native.flush(); await reading;
+  assert.equal(native.spoken.at(-1).voice.voiceURI,'natural');
+  native.ids['speech-voice'].value='uk'; native.ids['speech-voice'].handlers.change();
+  native.ids['speech-rate'].value='0.9'; native.ids['speech-rate'].handlers.change();
+  reading=vm.runInContext("speakText('A red apple.')",native.context); await native.flush(); await reading;
+  assert.equal(native.spoken.at(-1).lang,'en-GB'); assert.equal(native.spoken.at(-1).rate,.9);
+  const speechRestored=setup({speechSaved:native.speechSaved});
+  speechRestored.context.window.speechSynthesis.getVoices=()=>nativeVoices; vm.runInContext('loadVoices()',speechRestored.context);
+  assert.equal(speechRestored.ids['speech-voice'].value,'uk'); assert.equal(speechRestored.ids['speech-rate'].value,'0.9');
+  const sentences = setup(); vm.runInContext("levels[0].word='I can see a red apple.'", sentences.context);
+  sentences.ids.repeat.handlers.click(); await sentences.flush();
+  assert.deepEqual(sentences.spoken.map(u=>u.text),['I can see a red apple.']);
+  const missingVoice=setup(); missingVoice.context.window.speechSynthesis.getVoices=()=>[{lang:'zh-CN',name:'Chinese'}];
+  reading=vm.runInContext("speakText('Apple')",missingVoice.context); await missingVoice.flush();
+  assert.equal(await reading,false); assert.equal(missingVoice.spoken.length,0);
+  assert.match(missingVoice.ids['voice-status'].textContent,/无英语/);
+  const delayedVoice=setup(); let voiceChecks=0;
+  delayedVoice.context.window.speechSynthesis.getVoices=()=>++voiceChecks<4?[]:[nativeVoices[1]];
+  reading=vm.runInContext("speakText('Apple')",delayedVoice.context); await delayedVoice.flush();
+  assert.equal(await reading,true); assert.equal(delayedVoice.spoken[0].lang,'en-GB');
+  const longSpeech=setup(); const speechTimeouts=[]; const speechTimer=longSpeech.context.setTimeout;
+  longSpeech.context.setTimeout=(fn,ms)=>{speechTimeouts.push(ms);return speechTimer(fn,ms);};
+  reading=vm.runInContext(`speakText(${JSON.stringify('This is a longer English sentence. '.repeat(20))})`,longSpeech.context);
+  await longSpeech.flush(); await reading;
+  assert.ok(speechTimeouts.some(ms=>ms>12000 && ms<=120000));
+  console.log('PASS: English-only voice choice, stored accent/speed, delayed voices and sentence playback.');
   const fileApp = setup({ protocol: 'file:' }); fileApp.ids['pet-options'].children[0].handlers.click(); fileApp.ids.done.handlers.click(); await fileApp.flush(); assert.equal(fileApp.ids.record.disabled, false); assert.equal(fileApp.ids.record.textContent, '🎤 开始跟读'); assert.equal(fileApp.ids.spelling.disabled, false);
   let destination; fileApp.context.window.location.assign = url => { destination = url; };
   await fileApp.ids.record.handlers.click(); assert.equal(destination, 'draw-say://practice');
