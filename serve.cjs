@@ -2,6 +2,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const files = { '/': ['index.html', 'text/html; charset=utf-8'], '/index.html': ['index.html', 'text/html; charset=utf-8'], '/style.css': ['style.css', 'text/css; charset=utf-8'], '/learning.js': ['learning.js', 'text/javascript; charset=utf-8'], '/pets.js': ['pets.js', 'text/javascript; charset=utf-8'], '/curriculum.js': ['curriculum.js', 'text/javascript; charset=utf-8'], '/drawing-tasks.js': ['drawing-tasks.js', 'text/javascript; charset=utf-8'], '/english-translations.js': ['english-translations.js', 'text/javascript; charset=utf-8'], '/assets/pet-cat.png': ['assets/pet-cat.png', 'image/png'], '/assets/pet-dog.png': ['assets/pet-dog.png', 'image/png'], '/assets/pet-rabbit.png': ['assets/pet-rabbit.png', 'image/png'], '/assets/pet-panda.png': ['assets/pet-panda.png', 'image/png'], '/app.js': ['app.js', 'text/javascript; charset=utf-8'] };
+for (const pet of ['cat','dog','rabbit','panda']) files[`/assets/pet-${pet}-actions.png`] = [`assets/pet-${pet}-actions.png`, 'image/png'];
 for (const name of ['twinkle', 'mary', 'alphabet']) files['/assets/songs/' + name + '.mp3'] = ['assets/songs/' + name + '.mp3', 'audio/mpeg'];
 files['/songs-player.js'] = ['songs-player.js', 'text/javascript; charset=utf-8'];
 files['/songs.js'] = ['songs.js', 'text/javascript; charset=utf-8'];
@@ -30,7 +31,7 @@ const server = http.createServer((request, response) => {
   }
   fs.readFile(path.join(__dirname, file[0]), (error, data) => {
     if (error) { response.writeHead(500); response.end('Unable to load file'); return; }
-    response.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': 'no-store' }); response.end(data);
+    response.writeHead(200, { 'Content-Type': file[1], 'Cache-Control': 'no-store', ...(file[1] === 'image/png' ? {'Access-Control-Allow-Origin':'*'} : {}) }); response.end(data);
   });
 });
 server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? '端口 8765 已被占用，请关闭已有服务后重试。' : error.message); process.exitCode = 1; });

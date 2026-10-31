@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 function element(extra = {}) {
-  return Object.assign({ textContent: '', value: '', hidden: false, children: [], handlers: {}, dataset: {}, style: { setProperty() {} }, classList: { toggle() {}, add() {}, remove() {} }, setAttribute(name, value) { (this.attributes ||= {})[name] = value; }, addEventListener(name, fn) { const previous = this.handlers[name]; this.handlers[name] = previous ? (...args) => { previous(...args); return fn(...args); } : fn; }, appendChild(child) { this.children.push(child); }, replaceChildren(...children) { this.children = children; }, focus() {}, scrollIntoView() {} }, extra);
+  return Object.assign({ textContent: '', value: '', hidden: false, children: [], handlers: {}, dataset: {}, style: { setProperty(name, value) { this[name] = value; } }, classList: { toggle() {}, add() {}, remove() {} }, setAttribute(name, value) { (this.attributes ||= {})[name] = value; }, addEventListener(name, fn) { const previous = this.handlers[name]; this.handlers[name] = previous ? (...args) => { previous(...args); return fn(...args); } : fn; }, appendChild(child) { this.children.push(child); }, replaceChildren(...children) { this.children = children; }, focus() {}, scrollIntoView() {} }, extra);
 }
 function setup({ recognition = true, saved = null, protocol = 'http:', learning = false, courseSaved = null, drawingSaved = null } = {}) {
   const ids = {};
@@ -16,7 +16,7 @@ function setup({ recognition = true, saved = null, protocol = 'http:', learning 
   let timers = [], stored = saved, spoken = [], session; const courseStore = { 'draw-say-courses-v1': courseSaved, 'draw-say-drawing-v1': drawingSaved };
   const speech = { getVoices: () => [{ lang: 'en-US' }], addEventListener() {}, cancel() {}, speak(u) { spoken.push(u); queueMicrotask(() => u.onend()); } };
   class Recognition { constructor() { session = this; } start(track) { this.track = track; } stop() {} abort() { this.onerror?.({ error: 'aborted' }); } }
-  const context = { document: { getElementById: id => ids[id], querySelector: () => (ids.lesson ||= element()), querySelectorAll: () => colors, createElement: () => element(), createElementNS: () => element(), createTextNode: text => ({ textContent: text }) }, window: { speechSynthesis: speech, SpeechSynthesisUtterance: true, matchMedia: () => ({ matches: true }), location: { protocol } }, localStorage: { getItem: key => key === 'draw-say-pet-v1' ? stored : courseStore[key], setItem: (key, value) => { if (key === 'draw-say-pet-v1') stored = value; else courseStore[key] = value; } }, SpeechSynthesisUtterance: function(text) { this.text = text; }, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { timers = timers.filter(item => item !== t); }, Promise, Math };
+  const context = { document: { getElementById: id => ids[id], querySelector: () => (ids.lesson ||= element()), querySelectorAll: () => colors, createElement: tag => { const node = element({naturalWidth:793,naturalHeight:1983}); if (tag === 'canvas') node.getContext = () => ({clearRect(){},save(){},restore(){},translate(){},scale(){},drawImage(...args){(node.drawnFrames ||= []).push(args);}}); if (tag === 'img') Object.defineProperty(node, 'src', { set(value) { this.source = value; this.handlers.load?.(); }, get() { return this.source; } }); return node; }, createElementNS: () => element(), createTextNode: text => ({ textContent: text }) }, window: { speechSynthesis: speech, SpeechSynthesisUtterance: true, matchMedia: () => ({ matches: true }), location: { protocol } }, localStorage: { getItem: key => key === 'draw-say-pet-v1' ? stored : courseStore[key], setItem: (key, value) => { if (key === 'draw-say-pet-v1') stored = value; else courseStore[key] = value; } }, SpeechSynthesisUtterance: function(text) { this.text = text; }, setTimeout(fn, ms) { const t = { fn, ms }; timers.push(t); return t; }, clearTimeout(t) { timers = timers.filter(item => item !== t); }, Promise, Math };
   if (recognition) context.window.SpeechRecognition = Recognition;
   vm.createContext(context); vm.runInContext(fs.readFileSync('pets.js', 'utf8'), context); vm.runInContext(fs.readFileSync('app.js', 'utf8'), context);
   if (learning) { vm.runInContext(fs.readFileSync('curriculum.js', 'utf8'), context); vm.runInContext(fs.readFileSync('english-translations.js', 'utf8'), context); vm.runInContext(fs.readFileSync('drawing-tasks.js', 'utf8'), context); vm.runInContext(fs.readFileSync('learning.js', 'utf8'), context); }
@@ -123,7 +123,7 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
     assert.equal(petApp.ids['pet-actions'].children.filter(button => !button.disabled).length, unlocked);
     assert.equal(petApp.ids['pet-avatar'].dataset.pet, 'rabbit');
     petApp.ids['pet-actions'].children[3].handlers.click();
-    assert.equal(petApp.ids['pet-avatar'].attributes['data-motion'], unlocked >= 4 ? 'dance' : undefined);
+    assert.equal(petApp.ids['pet-avatar'].attributes['data-motion'], unlocked >= 4 ? 'dance' : '');
   }
   const evolving = setup({ saved: JSON.stringify({ pet: 'dog', points: 10, growth: 25, level: 0 }) });
   evolving.ids['food-options'].children[0].handlers.click();
@@ -250,9 +250,43 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
     assert.equal(motion.ids['pet-avatar'].attributes['data-motion'], move);
     assert.ok(motion.ids['pet-action-status'].textContent);
   }
+  assert.equal(motion.ids['pet-avatar'].attributes['data-animating'], 'true');
+  assert.equal(motion.ids['pet-avatar'].style['--action-y'], '100%');
+  await motion.flush();
+  assert.equal(motion.ids['pet-avatar'].attributes['data-animating'], 'false');
+  motion.context.window.matchMedia = () => ({ matches:false });
+  vm.runInContext("playPetMove('spin'); playPetMove('eat')", motion.context);
+  assert.equal(motion.ids['pet-avatar'].style['--action-y'], `${8 * 100 / 9}%`);
+  await motion.flush();
+  assert.equal(motion.ids['pet-avatar'].attributes['data-motion'], '');
   const character = motion.ids['pet-avatar'].children[0];
   assert.equal(character.children.filter(part=>part.className === 'pet-sprite').length, 1);
+  assert.equal(character.children.filter(part=>part.className === 'pet-action-sprite').length, 1);
+  const preloader = character.children.find(part=>part.src?.endsWith('-actions.png'));
+  preloader.handlers.error();
+  vm.runInContext("playPetMove('dance')",motion.context);
+  assert.equal(motion.ids['pet-avatar'].attributes['data-animating'], 'false');
+  assert.match(motion.ids['pet-action-status'].textContent,/加载/);
   assert.equal(JSON.parse(motion.saved).growth, 900);
+  for (const pet of ['cat','dog','rabbit','panda']) {
+    const poses = setup({saved:JSON.stringify({pet,points:100,growth:900,level:0})});
+    poses.context.window.matchMedia = () => ({matches:false});
+    const atlas = fs.readFileSync(`assets/pet-${pet}-actions.png`);
+    const width = atlas.readUInt32BE(16), height = atlas.readUInt32BE(20);
+    assert.equal(width,793); assert.equal(height,1983);
+    const poseCanvas = poses.ids['pet-avatar'].children[0].children.find(part=>part.className==='pet-action-sprite');
+    for (const action of ['blink','wave','jump','dance','stretch','spin','glow','cheer','eat','cuddle']) {
+      poseCanvas.drawnFrames = [];
+      vm.runInContext(`playPetMove('${action}')`,poses.context); await poses.flush();
+      assert.ok(poseCanvas.drawnFrames.length >= 4);
+      for (const [,x,y,w,h,dx,dy,dw,dh] of poseCanvas.drawnFrames) {
+        assert.ok(x>=0 && y>=0 && x+w<=width && y+h<=height);
+        assert.ok(Math.abs(dw/dh-w/h)<1e-8, 'pose must keep its original aspect ratio');
+        assert.ok(dx>=0 && dy>=0 && dx+dw<=256 && dy+dh<=256);
+      }
+    }
+  }
+  console.log('PASS: all 40 pet/action combinations use bounded, proportional full-pose frames.');
   console.log('PASS: all ten pet reactions select independently without changing growth.');
   console.log('PASS: complete Chinese/Thai coverage and answer translation visibility/reset.');
   console.log('PASS: six distinct stage banks, stage storage, decimals/percentages, scaled geometry and directions.');

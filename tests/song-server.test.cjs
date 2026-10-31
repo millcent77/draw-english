@@ -13,6 +13,11 @@ server.listen(0, '127.0.0.1', async () => {
   try {
     const port = server.address().port;
     assert.equal((await request(port, '/songs.js')).status, 200);
+    for (const pet of ['cat','dog','rabbit','panda']) {
+      const image = await request(port, `/assets/pet-${pet}-actions.png`);
+      assert.equal(image.status,200); assert.equal(image.headers['content-type'],'image/png');
+      assert.deepEqual(image.body,fs.readFileSync(`assets/pet-${pet}-actions.png`));
+    }
     assert.equal((await request(port, '/songs-player.js')).status, 200);
     for (const name of ['twinkle', 'mary', 'alphabet']) {
       const path = `/assets/songs/${name}.mp3`, local = fs.readFileSync(`assets/songs/${name}.mp3`);

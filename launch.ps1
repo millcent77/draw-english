@@ -14,8 +14,12 @@ try {
         try {
             $learningBody = $learningClient.GetStringAsync("$learningUrl/app.js").GetAwaiter().GetResult()
             $learningSongs = $learningClient.GetStringAsync("$learningUrl/songs-player.js").GetAwaiter().GetResult()
+            $learningPetCode = $learningClient.GetStringAsync("$learningUrl/pets.js").GetAwaiter().GetResult()
+            $learningPoses = $learningClient.GetAsync("$learningUrl/assets/pet-cat-actions.png", [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
+            try { $learningPosesReady = $learningPoses.IsSuccessStatusCode -and $learningPoses.Content.Headers.ContentType.MediaType -eq 'image/png' }
+            finally { $learningPoses.Dispose() }
             $learningAudio = $learningClient.GetAsync("$learningUrl/assets/songs/twinkle.mp3", [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
-            try { return $learningBody.Contains('draw-say-pet-v1') -and $learningSongs.Contains('INLINE_SINGING_PLAYER_V4') -and $learningAudio.IsSuccessStatusCode -and $learningAudio.Content.Headers.ContentType.MediaType -eq 'audio/mpeg' }
+            try { return $learningPosesReady -and $learningPetCode.Contains('petMotionSequences') -and $learningBody.Contains('draw-say-pet-v1') -and $learningSongs.Contains('INLINE_SINGING_PLAYER_V4') -and $learningAudio.IsSuccessStatusCode -and $learningAudio.Content.Headers.ContentType.MediaType -eq 'audio/mpeg' }
             finally { $learningAudio.Dispose() }
         } catch { return $false }
     }
@@ -24,13 +28,11 @@ try {
         try {
             $learningExisting = $learningClient.GetStringAsync("$learningUrl/app.js").GetAwaiter().GetResult()
             if ($learningExisting.Contains('draw-say-pet-v1')) {
-                $learningListener = Get-NetTCPConnection -LocalAddress '127.0.0.1' -LocalPort 8765 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($learningListener) {
-                    $learningOwner = Get-CimInstance Win32_Process -Filter "ProcessId=$($learningListener.OwningProcess)"
-                    if ($learningOwner.Name -eq 'node.exe' -and $learningOwner.CommandLine -match 'serve\.cjs') {
-                        Write-Host 'Restarting previous learning server for the update...'
-                        Stop-Process -Id $learningOwner.ProcessId -ErrorAction Stop
-                    }
+                $learningExpectedScript = [Regex]::Escape((Join-Path $PSScriptRoot 'serve.cjs'))
+                $learningOwners = Get-CimInstance Win32_Process -Filter "name='node.exe'" | Where-Object { $_.CommandLine -match ('"' + $learningExpectedScript + '"\s*$') }
+                foreach ($learningOwner in $learningOwners) {
+                    Write-Host 'Restarting previous learning server for the update...'
+                    Stop-Process -Id $learningOwner.ProcessId -ErrorAction Stop
                 }
             }
         } catch { Write-Host 'No verified older learning server to restart.' }
