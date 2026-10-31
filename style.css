@@ -76,27 +76,21 @@ body{background:radial-gradient(ellipse at 0 0,#e5f6ff,transparent 60%),radial-g
 
 .song-original{display:inline-block;padding:10px 14px;color:#6244a3;background:#f1ebfc;border-radius:12px;font-weight:800;font-size:13px;margin-bottom:14px}.song-network-note{font-size:12px;color:#897a68;line-height:1.7}
 .song-playback-modes{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.song-playback-modes button{min-height:46px;padding:10px 16px;border:2px solid #c8b4ec;border-radius:12px;background:#f6f1ff;color:#684aa6;font-weight:800}.song-playback-modes button[aria-pressed=true]{background:#7657cd;color:#fff;border-color:#7657cd}.song-video-frame{aspect-ratio:16/9;min-height:210px;background:#221b35;border-radius:14px;overflow:hidden}.song-video-frame iframe{display:block;width:100%;height:100%;border:0}#song-video-panel>p{font-size:12px;line-height:1.7;color:#897a68}#song-player[data-playback=video] .audio-only,#song-player[data-playback=video] #song-play,#song-player[data-playback=video] #song-restart,#song-player[data-playback=video]>.song-network-note{display:none}
-/* Articulated sprite choreography: head and body keep the same growth-stage crop. */
-.pet-sprite-upper{mask-image:linear-gradient(#000 0 60%,transparent 76%);transform-origin:50% 57%;z-index:2}
-.pet-sprite-lower{mask-image:linear-gradient(transparent 0 48%,#000 64%);transform-origin:50% 72%}
+/* Whole-artwork motion: never separate or mask the head and body. */
 .pet-avatar[data-motion] .pet-character{animation:none;transform:scale(var(--pet-size))}
 .pet-avatar[data-motion] .pet-sprite{animation:none}
-.pet-avatar[data-motion=blink] .pet-sprite-upper{animation:action-nod .8s 3}
+.pet-avatar[data-motion=blink] .pet-sprite{animation:action-nod .8s 3}
 .pet-avatar[data-motion=wave] .pet-sprite{animation:action-sway 1.2s 2;transform-origin:50% 90%}
 .pet-avatar[data-motion=jump] .pet-character{animation:action-jump 1.2s 2}
 .pet-avatar[data-motion=jump]:after{animation:action-shadow 1.2s 2}
 .pet-avatar[data-motion=dance] .pet-character{animation:action-dance 1.2s 2}
-.pet-avatar[data-motion=dance] .pet-sprite-upper{animation:action-head-beat .6s 4}
-.pet-avatar[data-motion=dance] .pet-sprite-lower{animation:action-step .6s 4}
-.pet-avatar[data-motion=stretch] .pet-sprite-upper{animation:action-stretch 2.4s 1}
-.pet-avatar[data-motion=stretch] .pet-sprite-lower{animation:action-stretch-body 2.4s 1}
+.pet-avatar[data-motion=dance] .pet-sprite{animation:action-head-beat .6s 4}
+.pet-avatar[data-motion=stretch] .pet-sprite{animation:action-stretch 2.4s 1}
 .pet-avatar[data-motion=spin] .pet-character{animation:action-spin 2.4s 1;transform-origin:center 70%}
 .pet-avatar[data-motion=glow] .pet-sprite{animation:action-glow 1.2s 2}
 .pet-avatar[data-motion=cheer] .pet-character{animation:action-cheer 1.2s 2}
-.pet-avatar[data-motion=cheer] .pet-sprite-upper{animation:action-head-beat .4s 6}
-.pet-avatar[data-motion=eat] .pet-sprite-upper{animation:action-eat .6s 4}
-.pet-avatar[data-motion=cuddle] .pet-sprite-upper{animation:action-cuddle 1.2s 2}
-.pet-avatar[data-motion=cuddle] .pet-sprite-lower{animation:action-purr .6s 4}
+.pet-avatar[data-motion=eat] .pet-sprite{animation:action-eat .6s 4}
+.pet-avatar[data-motion=cuddle] .pet-sprite{animation:action-cuddle 1.2s 2}
 .pet-motion-effect{position:absolute;inset:0;pointer-events:none;z-index:4;font-size:22px;white-space:pre;text-align:center;color:#e7a920;opacity:0}
 [data-motion=dance] .pet-motion-effect:after{content:'♪      ♫'}
 [data-motion=eat] .pet-motion-effect:after{content:'      😋'}
@@ -106,21 +100,18 @@ body{background:radial-gradient(ellipse at 0 0,#e5f6ff,transparent 60%),radial-g
 [data-motion=jump] .pet-motion-effect:after{content:'      ↑'}
 [data-motion=spin] .pet-motion-effect:after{content:'      ↻'}
 .pet-avatar[data-motion] .pet-motion-effect{animation:action-effects 2.4s 1}
-@keyframes action-nod{0%,100%{transform:none}30%,55%{transform:perspective(250px) rotateX(-28deg) translateY(5px)}75%{transform:rotateX(8deg)}}
+@keyframes action-nod{0%,100%{transform:none}30%,55%{transform:translateY(4px) scaleY(.96)}75%{transform:translateY(-1px)}}
 @keyframes action-sway{0%,100%{transform:none}25%{transform:translateX(-10px) rotate(-15deg)}75%{transform:translateX(10px) rotate(15deg)}}
-@keyframes action-jump{0%,100%{transform:scale(var(--pet-size))}15%,85%{transform:scale(var(--pet-size)) scale(1.12,.84)}40%,55%{transform:translateY(-32px) scale(var(--pet-size)) scale(.94,1.08)}}
+@keyframes action-jump{0%,100%{transform:scale(var(--pet-size))}15%,85%{transform:scale(var(--pet-size)) scale(1.04,.96)}40%,55%{transform:translateY(-32px) scale(var(--pet-size)) scale(.98,1.02)}}
 @keyframes action-shadow{40%,55%{transform:scale(.55);opacity:.18}}
 @keyframes action-dance{0%,50%,100%{transform:scale(var(--pet-size))}25%{transform:translate(-13px,-5px) rotate(-9deg) scale(var(--pet-size))}75%{transform:translate(13px,-5px) rotate(9deg) scale(var(--pet-size))}}
 @keyframes action-head-beat{50%{transform:rotate(-8deg) translateY(3px)}}
-@keyframes action-step{25%{transform:rotate(12deg) translateX(4px)}75%{transform:rotate(-12deg) translateX(-4px)}}
-@keyframes action-stretch{0%,100%{transform:none}30%,65%{transform:translateY(-9px) scale(.94,1.12) rotate(-5deg)}85%{transform:translateY(3px)}}
-@keyframes action-stretch-body{30%,65%{transform:scale(1.14,.88)}}
+@keyframes action-stretch{0%,100%{transform:none}30%,65%{transform:translateY(-4px) scale(.98,1.04)}85%{transform:translateY(3px)}}
 @keyframes action-spin{0%{transform:scale(var(--pet-size)) rotateY(0deg)}15%{transform:scale(var(--pet-size)) rotateY(-20deg)}85%,100%{transform:scale(var(--pet-size)) rotateY(360deg)}}
 @keyframes action-glow{50%{filter:drop-shadow(0 0 12px #ffd34d) brightness(1.18)}}
 @keyframes action-cheer{0%,100%{transform:scale(var(--pet-size))}25%,65%{transform:translateY(-19px) scale(var(--pet-size)) rotate(-5deg)}45%,85%{transform:scale(var(--pet-size)) rotate(5deg)}}
-@keyframes action-eat{25%{transform:translateY(7px) rotateX(-18deg)}55%{transform:translateY(4px) scale(1.04,.96)}80%{transform:translateY(6px) scale(.98,1.02)}}
-@keyframes action-cuddle{30%,65%{transform:translateX(6px) rotate(13deg)}85%{transform:translateX(-3px) rotate(-5deg)}}
-@keyframes action-purr{50%{transform:scale(1.025,.98)}}
+@keyframes action-eat{25%{transform:translateY(4px) scaleY(.97)}55%{transform:translateY(2px) scale(1.01,.99)}80%{transform:translateY(3px) scale(.99,1.01)}}
+@keyframes action-cuddle{30%,65%{transform:translateX(5px) rotate(6deg)}85%{transform:translateX(-3px) rotate(-5deg)}}
 @keyframes action-effects{10%,80%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
 .pet-avatar[data-motion=''] .pet-character{animation:pet-breathe 4s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.pet-avatar[data-motion] .pet-character,.pet-avatar[data-motion] .pet-sprite,.pet-avatar[data-motion]:after,.pet-avatar[data-motion] .pet-motion-effect{animation:none!important}.pet-avatar[data-motion] .pet-motion-effect{opacity:1}}

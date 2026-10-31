@@ -251,7 +251,7 @@ const submit = app => app.ids['answer-form'].handlers.submit({ preventDefault() 
     assert.ok(motion.ids['pet-action-status'].textContent);
   }
   const character = motion.ids['pet-avatar'].children[0];
-  assert.equal(character.children.filter(part=>part.className?.startsWith('pet-sprite ')).length, 2);
+  assert.equal(character.children.filter(part=>part.className === 'pet-sprite').length, 1);
   assert.equal(JSON.parse(motion.saved).growth, 900);
   console.log('PASS: all ten pet reactions select independently without changing growth.');
   console.log('PASS: complete Chinese/Thai coverage and answer translation visibility/reset.');

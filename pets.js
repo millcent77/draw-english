@@ -47,10 +47,8 @@ function renderPetCharacter(pet) {
       }
       character.appendChild(node);
     }
-    // Matching crops preserve the artwork while letting head and body move separately.
-    for (const section of ['lower', 'upper']) {
-      const sprite=document.createElement('span');sprite.className=`pet-sprite pet-sprite-${section}`;sprite.setAttribute('aria-hidden','true');character.appendChild(sprite);
-    }
+    // Keep the original artwork intact; moving cropped body sections tears the silhouette.
+    const sprite=document.createElement('span');sprite.className='pet-sprite';sprite.setAttribute('aria-hidden','true');character.appendChild(sprite);
     const effect=document.createElement('span');effect.className='pet-motion-effect';effect.setAttribute('aria-hidden','true');character.appendChild(effect);
     const heart = document.createElement('span'); heart.className = 'pet-affection'; heart.textContent = '♥'; character.appendChild(heart);
     avatar.appendChild(character);
